@@ -71,6 +71,23 @@ void ANetTPSCDCharacter::BeginPlay()
 	}
 }
 
+void ANetTPSCDCharacter::PickupPistol(const FInputActionValue& Value)
+{
+	if (bHasPistol)
+		return;
+
+	bHasPistol = true;
+}
+
+void ANetTPSCDCharacter::DropPistol(const FInputActionValue& Value)
+{
+	if (false == bHasPistol)
+		return;
+
+	bHasPistol = false;
+}
+
+
 //////////////////////////////////////////////////////////////////////////
 // Input
 
@@ -88,6 +105,10 @@ void ANetTPSCDCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ANetTPSCDCharacter::Look);
+
+		EnhancedInputComponent->BindAction(PickupPistolAction, ETriggerEvent::Started, this, &ANetTPSCDCharacter::PickupPistol);
+
+		EnhancedInputComponent->BindAction(DropPistolAction, ETriggerEvent::Started, this, &ANetTPSCDCharacter::DropPistol);
 	}
 	else
 	{

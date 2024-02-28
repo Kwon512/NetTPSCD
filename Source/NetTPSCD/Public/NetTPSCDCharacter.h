@@ -55,7 +55,6 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
-			
 
 protected:
 	// APawn interface
@@ -69,5 +68,22 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+
+	// --------------------------------------------
+protected:
+
+	void PickupPistol(const FInputActionValue& Value);
+	void DropPistol(const FInputActionValue& Value);
+
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	bool bHasPistol = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* PickupPistolAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* DropPistolAction;
 };
 

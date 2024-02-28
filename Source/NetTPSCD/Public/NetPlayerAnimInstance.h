@@ -15,6 +15,13 @@ class NETTPSCD_API UNetPlayerAnimInstance : public UAnimInstance
 	GENERATED_BODY()
 
 public:
+
+	virtual void NativeInitializeAnimation() override;
+	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+
+	UPROPERTY()
+	class ANetTPSCDCharacter* player;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	bool bHasPistol = false;
 
