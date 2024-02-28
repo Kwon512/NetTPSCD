@@ -92,7 +92,7 @@ public:
 
 	// 총을 잡을 수 있는 검색 거리
 	UPROPERTY(EditDefaultsOnly, Category = Pistol)
-	float findPistolDistance;
+	float findPistolRadius = 150;
 
 	// 잡은 총 액터
 	UPROPERTY()
@@ -101,6 +101,6 @@ public:
 	// 총을 손에 붙이는 기능
 	void AttachPistol(const AActor* pistol);
 	// 총을 손에서 떼는 기능
-	void DettachPistol();
+	void DetachPistol(const AActor* pistol);
 };
 

@@ -80,9 +80,40 @@ void ANetTPSCDCharacter::PickupPistol(const FInputActionValue& Value)
 	if (bHasPistol)
 		return;
 
-	bHasPistol = true;
-	// 가까운 총을 검색해서 손에 붙이고싶다.
+	// 가까운 총을 검색해서 
+	TArray<struct FOverlapResult> OutOverlaps;
+	FCollisionObjectQueryParams ObjectQueryParams(FCollisionObjectQueryParams::InitType::AllObjects);
 
+	bool bHits = GetWorld()->OverlapMultiByObjectType(
+		OutOverlaps,
+		GetActorLocation(),
+		FQuat::Identity,
+		ObjectQueryParams,
+		FCollisionShape::MakeSphere(findPistolRadius));
+
+	// 만약 검색된 결과 있다면
+	if (bHits)
+	{
+		// 전체 검색해서
+		for (auto result : OutOverlaps)
+		{
+			// 만약 액터의 이름에 BP_Pistol이 포함되어있다면
+			if (result.GetActor()->GetActorNameOrLabel().Contains(TEXT("BP_Pistol")))
+			{
+				// 그것을 grabPistol로 하고싶다.
+				grabPistol = result.GetActor();
+				// 반복을 그만하고싶다.
+				break;
+			}
+		}
+	}
+
+	// grabPistol이 nullptr이 아니라면 손에 붙이고싶다.
+	if (grabPistol)
+	{
+		AttachPistol(grabPistol);
+		bHasPistol = true;
+	}
 }
 
 void ANetTPSCDCharacter::DropPistol(const FInputActionValue& Value)
@@ -91,16 +122,32 @@ void ANetTPSCDCharacter::DropPistol(const FInputActionValue& Value)
 		return;
 
 	bHasPistol = false;
+	DetachPistol(grabPistol);
 }
 
 void ANetTPSCDCharacter::AttachPistol(const AActor* pistol)
 {
-	UE_LOG(LogTemp, Warning, TEXT("adsfasdf"))
-
+	// pistol의 staticmeshcomponent를 가져오고싶다.
+	auto mesh = pistol->GetComponentByClass<UStaticMeshComponent>();
+	// pistol 물리를 끄고싶다.
+	mesh->SetSimulatePhysics(false);
+	// hand에 붙이고싶다.
+	mesh->AttachToComponent(handComp, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 }
 
-void ANetTPSCDCharacter::DettachPistol()
+void ANetTPSCDCharacter::DetachPistol(const AActor* pistol)
 {
+	if (nullptr == grabPistol)
+		return;
+
+	// pistol의 staticmeshcomponent를 가져오고싶다.
+	auto mesh = pistol->GetComponentByClass<UStaticMeshComponent>();
+	// pistol 물리를 켜고싶다.
+	mesh->SetSimulatePhysics(true);
+	// hand에서 떼고싶다.
+	mesh->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+
+	grabPistol = nullptr;
 }
 
 
