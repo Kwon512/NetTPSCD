@@ -52,8 +52,12 @@ ANetTPSCDCharacter::ANetTPSCDCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+	// 손 컴포넌트를 생성해서 GetMesh의 GunPoint에 붙이고싶다.
+	handComp = CreateDefaultSubobject<USceneComponent>(TEXT("handComp"));
+	handComp->SetupAttachment(GetMesh(), TEXT("GunPoint"));
+	handComp->SetRelativeLocationAndRotation(
+		FVector(-16.117320f, 2.606926f, 3.561379f),
+		FRotator(17.690681f, 83.344357f,  9.577745));
 }
 
 void ANetTPSCDCharacter::BeginPlay()
@@ -77,6 +81,8 @@ void ANetTPSCDCharacter::PickupPistol(const FInputActionValue& Value)
 		return;
 
 	bHasPistol = true;
+	// 가까운 총을 검색해서 손에 붙이고싶다.
+
 }
 
 void ANetTPSCDCharacter::DropPistol(const FInputActionValue& Value)
@@ -85,6 +91,16 @@ void ANetTPSCDCharacter::DropPistol(const FInputActionValue& Value)
 		return;
 
 	bHasPistol = false;
+}
+
+void ANetTPSCDCharacter::AttachPistol(const AActor* pistol)
+{
+	UE_LOG(LogTemp, Warning, TEXT("adsfasdf"))
+
+}
+
+void ANetTPSCDCharacter::DettachPistol()
+{
 }
 
 

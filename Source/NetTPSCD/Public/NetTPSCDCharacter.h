@@ -85,5 +85,22 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* DropPistolAction;
+
+	// 손에 해당하는 컴포넌트를 만들어서 손 소켓에 붙이고싶다.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Pistol)
+	class USceneComponent* handComp;
+
+	// 총을 잡을 수 있는 검색 거리
+	UPROPERTY(EditDefaultsOnly, Category = Pistol)
+	float findPistolDistance;
+
+	// 잡은 총 액터
+	UPROPERTY()
+	class AActor* grabPistol;
+
+	// 총을 손에 붙이는 기능
+	void AttachPistol(const AActor* pistol);
+	// 총을 손에서 떼는 기능
+	void DettachPistol();
 };
 
