@@ -10,7 +10,9 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "MainUI.h"
 #include "NetPlayerAnimInstance.h"
+#include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
 
 DEFINE_LOG_CATEGORY( LogTemplateCharacter );
@@ -67,6 +69,13 @@ void ANetTPSCDCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
+	// MainUI를 생성해서 기억하고싶다.
+	mainUI = CreateWidget<UMainUI>(GetWorld(), mainUIFactory);
+	// AddToViewport하고싶다.
+	mainUI->AddToViewport();
+	// 크로스헤어를 안보이게 하고싶다.
+	mainUI->SetActiveCrosshair( false );
+
 	//Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>( Controller ))
 	{
@@ -75,6 +84,7 @@ void ANetTPSCDCharacter::BeginPlay()
 			Subsystem->AddMappingContext( DefaultMappingContext , 0 );
 		}
 	}
+
 }
 
 void ANetTPSCDCharacter::PickupPistol( const FInputActionValue& Value )
@@ -114,7 +124,9 @@ void ANetTPSCDCharacter::PickupPistol( const FInputActionValue& Value )
 	if (grabPistol)
 	{
 		AttachPistol( grabPistol );
+		grabPistol->SetOwner( this );
 		bHasPistol = true;
+		mainUI->SetActiveCrosshair( true );
 	}
 }
 
@@ -125,6 +137,7 @@ void ANetTPSCDCharacter::DropPistol( const FInputActionValue& Value )
 
 	bHasPistol = false;
 	DetachPistol( grabPistol );
+	mainUI->SetActiveCrosshair( false );
 }
 
 void ANetTPSCDCharacter::AttachPistol( const AActor* pistol )
@@ -149,6 +162,7 @@ void ANetTPSCDCharacter::DetachPistol( const AActor* pistol )
 	// hand에서 떼고싶다.
 	mesh->DetachFromComponent( FDetachmentTransformRules::KeepRelativeTransform );
 
+	grabPistol->SetOwner( nullptr );
 	grabPistol = nullptr;
 }
 
