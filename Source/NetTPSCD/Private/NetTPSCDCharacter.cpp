@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+ï»¿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "NetTPSCDCharacter.h"
 #include "Engine/LocalPlayer.h"
@@ -10,8 +10,10 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "NetPlayerAnimInstance.h"
+#include "Kismet/GameplayStatics.h"
 
-DEFINE_LOG_CATEGORY(LogTemplateCharacter);
+DEFINE_LOG_CATEGORY( LogTemplateCharacter );
 
 //////////////////////////////////////////////////////////////////////////
 // ANetTPSCDCharacter
@@ -19,17 +21,17 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 ANetTPSCDCharacter::ANetTPSCDCharacter()
 {
 	// Set size for collision capsule
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-		
+	GetCapsuleComponent()->InitCapsuleSize( 42.f , 96.0f );
+
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationRoll = false;
 
 	// Configure character movement
-	GetCharacterMovement()->bUseControllerDesiredRotation= true;
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
 	GetCharacterMovement()->bOrientRotationToMovement = false; // Character moves in the direction of input...	
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
+	GetCharacterMovement()->RotationRate = FRotator( 0.0f , 500.0f , 0.0f ); // ...at this rotation rate
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
@@ -41,23 +43,23 @@ ANetTPSCDCharacter::ANetTPSCDCharacter()
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
+	CameraBoom = CreateDefaultSubobject<USpringArmComponent>( TEXT( "CameraBoom" ) );
+	CameraBoom->SetupAttachment( RootComponent );
 	CameraBoom->TargetArmLength = 130.0f; // The camera follows at this distance behind the character	
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
-	CameraBoom->SetRelativeLocation(FVector(0, 40, 60));
+	CameraBoom->SetRelativeLocation( FVector( 0 , 40 , 60 ) );
 
 	// Create a follow camera
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
+	FollowCamera = CreateDefaultSubobject<UCameraComponent>( TEXT( "FollowCamera" ) );
+	FollowCamera->SetupAttachment( CameraBoom , USpringArmComponent::SocketName ); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	// ¼Õ ÄÄÆ÷³ÍÆ®¸¦ »ı¼ºÇØ¼­ GetMeshÀÇ GunPoint¿¡ ºÙÀÌ°í½Í´Ù.
-	handComp = CreateDefaultSubobject<USceneComponent>(TEXT("handComp"));
-	handComp->SetupAttachment(GetMesh(), TEXT("GunPoint"));
+	// ì† ì»´í¬ë„ŒíŠ¸ë¥¼ ìƒì„±í•´ì„œ GetMeshì˜ GunPointì— ë¶™ì´ê³ ì‹¶ë‹¤.
+	handComp = CreateDefaultSubobject<USceneComponent>( TEXT( "handComp" ) );
+	handComp->SetupAttachment( GetMesh() , TEXT( "GunPoint" ) );
 	handComp->SetRelativeLocationAndRotation(
-		FVector(-16.117320f, 2.606926f, 3.561379f),
-		FRotator(17.690681f, 83.344357f,  9.577745));
+		FVector( -16.117320f , 2.606926f , 3.561379f ) ,
+		FRotator( 17.690681f , 83.344357f , 9.577745 ) );
 }
 
 void ANetTPSCDCharacter::BeginPlay()
@@ -66,120 +68,151 @@ void ANetTPSCDCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	//Add Input Mapping Context
-	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
+	if (APlayerController* PlayerController = Cast<APlayerController>( Controller ))
 	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>( PlayerController->GetLocalPlayer() ))
 		{
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+			Subsystem->AddMappingContext( DefaultMappingContext , 0 );
 		}
 	}
 }
 
-void ANetTPSCDCharacter::PickupPistol(const FInputActionValue& Value)
+void ANetTPSCDCharacter::PickupPistol( const FInputActionValue& Value )
 {
 	if (bHasPistol)
 		return;
 
-	// °¡±î¿î ÃÑÀ» °Ë»öÇØ¼­ 
+	// ê°€ê¹Œìš´ ì´ì„ ê²€ìƒ‰í•´ì„œ 
 	TArray<struct FOverlapResult> OutOverlaps;
-	FCollisionObjectQueryParams ObjectQueryParams(FCollisionObjectQueryParams::InitType::AllObjects);
+	FCollisionObjectQueryParams ObjectQueryParams( FCollisionObjectQueryParams::InitType::AllObjects );
 
 	bool bHits = GetWorld()->OverlapMultiByObjectType(
-		OutOverlaps,
-		GetActorLocation(),
-		FQuat::Identity,
-		ObjectQueryParams,
-		FCollisionShape::MakeSphere(findPistolRadius));
+		OutOverlaps ,
+		GetActorLocation() ,
+		FQuat::Identity ,
+		ObjectQueryParams ,
+		FCollisionShape::MakeSphere( findPistolRadius ) );
 
-	// ¸¸¾à °Ë»öµÈ °á°ú ÀÖ´Ù¸é
+	// ë§Œì•½ ê²€ìƒ‰ëœ ê²°ê³¼ ìˆë‹¤ë©´
 	if (bHits)
 	{
-		// ÀüÃ¼ °Ë»öÇØ¼­
+		// ì „ì²´ ê²€ìƒ‰í•´ì„œ
 		for (auto result : OutOverlaps)
 		{
-			// ¸¸¾à ¾×ÅÍÀÇ ÀÌ¸§¿¡ BP_PistolÀÌ Æ÷ÇÔµÇ¾îÀÖ´Ù¸é
-			if (result.GetActor()->GetActorNameOrLabel().Contains(TEXT("BP_Pistol")))
+			// ë§Œì•½ ì•¡í„°ì˜ ì´ë¦„ì— BP_Pistolì´ í¬í•¨ë˜ì–´ìˆë‹¤ë©´
+			if (result.GetActor()->GetActorNameOrLabel().Contains( TEXT( "BP_Pistol" ) ))
 			{
-				// ±×°ÍÀ» grabPistol·Î ÇÏ°í½Í´Ù.
+				// ê·¸ê²ƒì„ grabPistolë¡œ í•˜ê³ ì‹¶ë‹¤.
 				grabPistol = result.GetActor();
-				// ¹İº¹À» ±×¸¸ÇÏ°í½Í´Ù.
+				// ë°˜ë³µì„ ê·¸ë§Œí•˜ê³ ì‹¶ë‹¤.
 				break;
 			}
 		}
 	}
 
-	// grabPistolÀÌ nullptrÀÌ ¾Æ´Ï¶ó¸é ¼Õ¿¡ ºÙÀÌ°í½Í´Ù.
+	// grabPistolì´ nullptrì´ ì•„ë‹ˆë¼ë©´ ì†ì— ë¶™ì´ê³ ì‹¶ë‹¤.
 	if (grabPistol)
 	{
-		AttachPistol(grabPistol);
+		AttachPistol( grabPistol );
 		bHasPistol = true;
 	}
 }
 
-void ANetTPSCDCharacter::DropPistol(const FInputActionValue& Value)
+void ANetTPSCDCharacter::DropPistol( const FInputActionValue& Value )
 {
 	if (false == bHasPistol)
 		return;
 
 	bHasPistol = false;
-	DetachPistol(grabPistol);
+	DetachPistol( grabPistol );
 }
 
-void ANetTPSCDCharacter::AttachPistol(const AActor* pistol)
+void ANetTPSCDCharacter::AttachPistol( const AActor* pistol )
 {
-	// pistolÀÇ staticmeshcomponent¸¦ °¡Á®¿À°í½Í´Ù.
+	// pistolì˜ staticmeshcomponentë¥¼ ê°€ì ¸ì˜¤ê³ ì‹¶ë‹¤.
 	auto mesh = pistol->GetComponentByClass<UStaticMeshComponent>();
-	// pistol ¹°¸®¸¦ ²ô°í½Í´Ù.
-	mesh->SetSimulatePhysics(false);
-	// hand¿¡ ºÙÀÌ°í½Í´Ù.
-	mesh->AttachToComponent(handComp, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+	// pistol ë¬¼ë¦¬ë¥¼ ë„ê³ ì‹¶ë‹¤.
+	mesh->SetSimulatePhysics( false );
+	// handì— ë¶™ì´ê³ ì‹¶ë‹¤.
+	mesh->AttachToComponent( handComp , FAttachmentTransformRules::SnapToTargetNotIncludingScale );
 }
 
-void ANetTPSCDCharacter::DetachPistol(const AActor* pistol)
+void ANetTPSCDCharacter::DetachPistol( const AActor* pistol )
 {
 	if (nullptr == grabPistol)
 		return;
 
-	// pistolÀÇ staticmeshcomponent¸¦ °¡Á®¿À°í½Í´Ù.
+	// pistolì˜ staticmeshcomponentë¥¼ ê°€ì ¸ì˜¤ê³ ì‹¶ë‹¤.
 	auto mesh = pistol->GetComponentByClass<UStaticMeshComponent>();
-	// pistol ¹°¸®¸¦ ÄÑ°í½Í´Ù.
-	mesh->SetSimulatePhysics(true);
-	// hand¿¡¼­ ¶¼°í½Í´Ù.
-	mesh->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+	// pistol ë¬¼ë¦¬ë¥¼ ì¼œê³ ì‹¶ë‹¤.
+	mesh->SetSimulatePhysics( true );
+	// handì—ì„œ ë–¼ê³ ì‹¶ë‹¤.
+	mesh->DetachFromComponent( FDetachmentTransformRules::KeepRelativeTransform );
 
 	grabPistol = nullptr;
+}
+
+void ANetTPSCDCharacter::Fire( const FInputActionValue& Value )
+{
+	// ë‚´ê°€ ì´ì„ ê°€ì§€ê³  ìˆì§€ ì•Šë‹¤ë©´ ë°”ë¡œ í•¨ìˆ˜ ì¢…ë£Œ
+	if (false == bHasPistol || nullptr == grabPistol)
+		return;
+
+	// UNetPlayerAnimInstance::PlayerFireAnimationë¥¼ í˜¸ì¶œí•˜ê³ ì‹¶ë‹¤.
+	// 1. UNetPlayerAnimInstanceë¥¼ ê°€ì ¸ì˜¤ê³ ì‹¶ë‹¤.
+	auto anim = Cast<UNetPlayerAnimInstance>( GetMesh()->GetAnimInstance() );
+	// 2. PlayerFireAnimationë¥¼ í˜¸ì¶œí•˜ê³ ì‹¶ë‹¤.
+	anim->PlayerFireAnimation();
+
+	// - ì¹´ë©”ë¼ìœ„ì¹˜ì—ì„œ ì¹´ë©”ë¼ ì•ë°©í–¥ìœ¼ë¡œ
+	FHitResult OutHit;
+	FVector Start = FollowCamera->GetComponentLocation();
+	FVector End = Start + FollowCamera->GetForwardVector() * 100000;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor( this );
+	// ë°”ë¼ë³´ê³ 
+	bool bHit = GetWorld()->LineTraceSingleByChannel( OutHit , Start , End , ECollisionChannel::ECC_Visibility , Params );
+
+	// ë§Œì•½ ë¶€ë”ªíŒê³³ì´ ìˆë‹¤ë©´ 
+	if (bHit)
+	{
+		// ê·¸ê³³ì— í­ë°œVFXë¥¼ ë°°ì¹˜í•˜ê³ ì‹¶ë‹¤.
+		UGameplayStatics::SpawnEmitterAtLocation( GetWorld() , ExplosionVFXFactory , OutHit.ImpactPoint );
+	}
 }
 
 
 //////////////////////////////////////////////////////////////////////////
 // Input
 
-void ANetTPSCDCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ANetTPSCDCharacter::SetupPlayerInputComponent( UInputComponent* PlayerInputComponent )
 {
 	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
-		
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>( PlayerInputComponent )) {
+
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction( JumpAction , ETriggerEvent::Started , this , &ACharacter::Jump );
+		EnhancedInputComponent->BindAction( JumpAction , ETriggerEvent::Completed , this , &ACharacter::StopJumping );
 
 		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ANetTPSCDCharacter::Move);
+		EnhancedInputComponent->BindAction( MoveAction , ETriggerEvent::Triggered , this , &ANetTPSCDCharacter::Move );
 
 		// Looking
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ANetTPSCDCharacter::Look);
+		EnhancedInputComponent->BindAction( LookAction , ETriggerEvent::Triggered , this , &ANetTPSCDCharacter::Look );
 
-		EnhancedInputComponent->BindAction(PickupPistolAction, ETriggerEvent::Started, this, &ANetTPSCDCharacter::PickupPistol);
+		EnhancedInputComponent->BindAction( PickupPistolAction , ETriggerEvent::Started , this , &ANetTPSCDCharacter::PickupPistol );
 
-		EnhancedInputComponent->BindAction(DropPistolAction, ETriggerEvent::Started, this, &ANetTPSCDCharacter::DropPistol);
+		EnhancedInputComponent->BindAction( DropPistolAction , ETriggerEvent::Started , this , &ANetTPSCDCharacter::DropPistol );
+
+		EnhancedInputComponent->BindAction( FireAction , ETriggerEvent::Started , this , &ANetTPSCDCharacter::Fire );
 	}
 	else
 	{
-		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		UE_LOG( LogTemplateCharacter , Error , TEXT( "'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file." ) , *GetNameSafe( this ) );
 	}
 }
 
-void ANetTPSCDCharacter::Move(const FInputActionValue& Value)
+void ANetTPSCDCharacter::Move( const FInputActionValue& Value )
 {
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
@@ -188,21 +221,21 @@ void ANetTPSCDCharacter::Move(const FInputActionValue& Value)
 	{
 		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		const FRotator YawRotation( 0 , Rotation.Yaw , 0 );
 
 		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	
+		const FVector ForwardDirection = FRotationMatrix( YawRotation ).GetUnitAxis( EAxis::X );
+
 		// get right vector 
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		const FVector RightDirection = FRotationMatrix( YawRotation ).GetUnitAxis( EAxis::Y );
 
 		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
+		AddMovementInput( ForwardDirection , MovementVector.Y );
+		AddMovementInput( RightDirection , MovementVector.X );
 	}
 }
 
-void ANetTPSCDCharacter::Look(const FInputActionValue& Value)
+void ANetTPSCDCharacter::Look( const FInputActionValue& Value )
 {
 	// input is a Vector2D
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
@@ -210,7 +243,7 @@ void ANetTPSCDCharacter::Look(const FInputActionValue& Value)
 	if (Controller != nullptr)
 	{
 		// add yaw and pitch input to controller
-		AddControllerYawInput(LookAxisVector.X);
-		AddControllerPitchInput(LookAxisVector.Y);
+		AddControllerYawInput( LookAxisVector.X );
+		AddControllerPitchInput( LookAxisVector.Y );
 	}
 }

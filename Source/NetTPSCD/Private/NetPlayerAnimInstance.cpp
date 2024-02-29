@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "NetPlayerAnimInstance.h"
@@ -8,23 +8,47 @@
 void UNetPlayerAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
-	// player�� ����ϰ��ʹ�.
-	player = Cast<ANetTPSCDCharacter>(GetOwningActor());
+	// player를 기억하고싶다.
+	player = Cast<ANetTPSCDCharacter>( GetOwningActor() );
 }
 
-void UNetPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
+void UNetPlayerAnimInstance::NativeUpdateAnimation( float DeltaSeconds )
 {
-	Super::NativeUpdateAnimation(DeltaSeconds);
+	Super::NativeUpdateAnimation( DeltaSeconds );
 
 	if (nullptr == player)
 		return;
 
-	// speed, direction���� ä����ʹ�.
+	// speed, direction값을 채우고싶다.
 	const FVector velocity = player->GetVelocity();
 
-	speed = FVector::DotProduct(velocity, player->GetActorForwardVector());
+	speed = FVector::DotProduct( velocity , player->GetActorForwardVector() );
 
-	direction = FVector::DotProduct(velocity, player->GetActorRightVector());
+	direction = FVector::DotProduct( velocity , player->GetActorRightVector() );
 
 	bHasPistol = player->bHasPistol;
+
+	// Player의 Pitch값을 가져와서 PitchAngle에 대입하고싶다.
+	pitchAngle = -player->GetBaseAimRotation().GetNormalized().Pitch;
+
+	// pitchAngle값을 -60 ~ 60안에 가두고싶다.
+	pitchAngle = FMath::Clamp( pitchAngle , -60 , 60 );
+
+	//FVector	forwardVector = player->GetActorForwardVector();
+	//FVector direction = FVector( 1 , 1 , 0 );
+
+	//float dot = FVector::DotProduct( forwardVector , direction );
+	//float angle =  FMath::RadiansToDegrees( FMath::Acos( dot ) );
+	//// -180 ~ 180
+	//if (angle < 0)
+	//	angle = 360 + angle;
+}
+
+void UNetPlayerAnimInstance::PlayerFireAnimation()
+{
+	// 총을 잡고 있을때만 총쏘기 애니메이션을 하고싶다.
+	if (bHasPistol && fireMontage)
+	{
+		Montage_Play( fireMontage );
+	}
 }

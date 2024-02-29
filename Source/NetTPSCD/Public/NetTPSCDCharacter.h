@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+ï»¿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -86,21 +86,34 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* DropPistolAction;
 
-	// ¼Õ¿¡ ÇØ´çÇÏ´Â ÄÄÆ÷³ÍÆ®¸¦ ¸¸µé¾î¼­ ¼Õ ¼ÒÄÏ¿¡ ºÙÀÌ°í½Í´Ù.
+	// ì†ì— í•´ë‹¹í•˜ëŠ” ì»´í¬ë„ŒíŠ¸ë¥¼ ë§Œë“¤ì–´ì„œ ì† ì†Œì¼“ì— ë¶™ì´ê³ ì‹¶ë‹¤.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Pistol)
 	class USceneComponent* handComp;
 
-	// ÃÑÀ» ÀâÀ» ¼ö ÀÖ´Â °Ë»ö °Å¸®
+	// ì´ì„ ì¡ì„ ìˆ˜ ìˆëŠ” ê²€ìƒ‰ ê±°ë¦¬
 	UPROPERTY(EditDefaultsOnly, Category = Pistol)
 	float findPistolRadius = 150;
 
-	// ÀâÀº ÃÑ ¾×ÅÍ
+	// ì¡ì€ ì´ ì•¡í„°
 	UPROPERTY()
 	class AActor* grabPistol;
 
-	// ÃÑÀ» ¼Õ¿¡ ºÙÀÌ´Â ±â´É
+	// ì´ì„ ì†ì— ë¶™ì´ëŠ” ê¸°ëŠ¥
 	void AttachPistol(const AActor* pistol);
-	// ÃÑÀ» ¼Õ¿¡¼­ ¶¼´Â ±â´É
+	// ì´ì„ ì†ì—ì„œ ë–¼ëŠ” ê¸°ëŠ¥
 	void DetachPistol(const AActor* pistol);
+
+	// ë§ˆìš°ìŠ¤ ì™¼ìª½ ë²„íŠ¼ì„ í´ë¦­í•˜ë©´
+	// ì´ì„ ì˜ê³ ì‹¶ë‹¤. ë¶€ë”ªíŒê²ƒì´ ìˆë‹¤ë©´ ê·¸ê³³ì— í­ë°œVFXë¥¼ í‘œí˜„í•˜ê³ ì‹¶ë‹¤.
+	// - ì…ë ¥
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* FireAction;
+
+	void Fire( const FInputActionValue& Value );
+
+	// - í­ë°œVFXê³µì¥
+	UPROPERTY(EditDefaultsOnly)
+	class UParticleSystem* ExplosionVFXFactory;
+
 };
 
