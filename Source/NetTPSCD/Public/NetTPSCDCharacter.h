@@ -122,5 +122,21 @@ public:
 
 	UPROPERTY()
 	class UMainUI* mainUI;
+
+	UPROPERTY(EditDefaultsOnly)
+	int32 maxBulletCount = 21;
+
+	int32 bulletCount = maxBulletCount;
+
+	UPROPERTY( EditAnywhere , BlueprintReadOnly , Category = Input )
+	UInputAction* ReloadAction;
+
+	void Reload( const FInputActionValue& Value );
+
+	void InitAmmo();
+	// 재장전 중에
+	// 재장전을 막고싶다.
+	// 총쏘기도 막고싶다.
+	bool isReload;
 };
 

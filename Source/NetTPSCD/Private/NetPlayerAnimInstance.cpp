@@ -44,11 +44,28 @@ void UNetPlayerAnimInstance::NativeUpdateAnimation( float DeltaSeconds )
 	//	angle = 360 + angle;
 }
 
-void UNetPlayerAnimInstance::PlayerFireAnimation()
+void UNetPlayerAnimInstance::PlayFireAnimation()
 {
 	// 총을 잡고 있을때만 총쏘기 애니메이션을 하고싶다.
 	if (bHasPistol && fireMontage)
 	{
 		Montage_Play( fireMontage );
 	}
+}
+
+void UNetPlayerAnimInstance::PlayReloadAnimation()
+{
+	if (bHasPistol && reloadMontage)
+	{
+		Montage_Play( reloadMontage );
+	}
+}
+
+void UNetPlayerAnimInstance::AnimNotify_OnReloadFinished()
+{
+	// 캐릭터에게 실제로 총알을 채워라 라고 하고싶다.
+	if (nullptr == player)
+		return;
+
+	player->InitAmmo();
 }

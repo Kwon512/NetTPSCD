@@ -76,6 +76,12 @@ void ANetTPSCDCharacter::BeginPlay()
 	// 크로스헤어를 안보이게 하고싶다.
 	mainUI->SetActiveCrosshair( false );
 
+	// 총알 UI를 최대 총알 갯수만큼 생성해주고싶다.
+	for (int32 i = 0; i < maxBulletCount; i++)
+	{
+		mainUI->AddBulletUI();
+	}
+
 	//Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>( Controller ))
 	{
@@ -169,14 +175,27 @@ void ANetTPSCDCharacter::DetachPistol( const AActor* pistol )
 void ANetTPSCDCharacter::Fire( const FInputActionValue& Value )
 {
 	// 내가 총을 가지고 있지 않다면 바로 함수 종료
-	if (false == bHasPistol || nullptr == grabPistol)
+	// bulletCount가 0 이하라면 바로 함수 종료
+	if (false == bHasPistol || nullptr == grabPistol || bulletCount <= 0)
 		return;
+
+	// 만약 재장전 중이라면 함수를 바로 종료
+	if (isReload)
+		return;
+
+	// 1개 차감하고
+	bulletCount--;
+	// 총알UI를 갱신하고싶다.
+	if (mainUI)
+	{
+		mainUI->RemoveBulletUI( bulletCount );
+	}
 
 	// UNetPlayerAnimInstance::PlayerFireAnimation를 호출하고싶다.
 	// 1. UNetPlayerAnimInstance를 가져오고싶다.
 	auto anim = Cast<UNetPlayerAnimInstance>( GetMesh()->GetAnimInstance() );
 	// 2. PlayerFireAnimation를 호출하고싶다.
-	anim->PlayerFireAnimation();
+	anim->PlayFireAnimation();
 
 	// - 카메라위치에서 카메라 앞방향으로
 	FHitResult OutHit;
@@ -193,6 +212,28 @@ void ANetTPSCDCharacter::Fire( const FInputActionValue& Value )
 		// 그곳에 폭발VFX를 배치하고싶다.
 		UGameplayStatics::SpawnEmitterAtLocation( GetWorld() , ExplosionVFXFactory , OutHit.ImpactPoint );
 	}
+}
+
+void ANetTPSCDCharacter::Reload(const FInputActionValue& Value)
+{
+	// 만약 재장전 중이라면 함수를 바로 종료
+	if (isReload)
+		return;
+
+	isReload = true;
+	// 리로드 애니메이션을 재생.
+	auto anim = Cast<UNetPlayerAnimInstance>( GetMesh()->GetAnimInstance() );
+	anim->PlayReloadAnimation();
+}
+
+void ANetTPSCDCharacter::InitAmmo()
+{
+	bulletCount = maxBulletCount;
+	if (mainUI)
+	{
+		mainUI->ReloadBulletUI( maxBulletCount );
+	}
+	isReload = false;
 }
 
 
@@ -219,6 +260,8 @@ void ANetTPSCDCharacter::SetupPlayerInputComponent( UInputComponent* PlayerInput
 		EnhancedInputComponent->BindAction( DropPistolAction , ETriggerEvent::Started , this , &ANetTPSCDCharacter::DropPistol );
 
 		EnhancedInputComponent->BindAction( FireAction , ETriggerEvent::Started , this , &ANetTPSCDCharacter::Fire );
+
+		EnhancedInputComponent->BindAction( ReloadAction , ETriggerEvent::Started , this , &ANetTPSCDCharacter::Reload);
 	}
 	else
 	{
