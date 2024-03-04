@@ -33,4 +33,12 @@ public:
 	void ReloadBulletUI(int32 maxBulletCount);
 	void AddBulletUI();
 	void RemoveBulletUI(int32 index);
+
+	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )
+	class UProgressBar* bar_hp;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	float hp = 1.0f;
+
+
 };

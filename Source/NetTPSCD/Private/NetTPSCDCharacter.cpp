@@ -9,10 +9,12 @@
 #include "GameFramework/Controller.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "HPBarWidget.h"
 #include "InputActionValue.h"
 #include "MainUI.h"
 #include "NetPlayerAnimInstance.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/WidgetComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 DEFINE_LOG_CATEGORY( LogTemplateCharacter );
@@ -62,6 +64,10 @@ ANetTPSCDCharacter::ANetTPSCDCharacter()
 	handComp->SetRelativeLocationAndRotation(
 		FVector( -16.117320f , 2.606926f , 3.561379f ) ,
 		FRotator( 17.690681f , 83.344357f , 9.577745 ) );
+
+	// 상대방의 hpUIComp 컴포넌트를 추가하고싶다.
+	hpUIComp = CreateDefaultSubobject<UWidgetComponent>( TEXT("hpUIComp") );
+	hpUIComp->SetupAttachment( RootComponent );
 }
 
 void ANetTPSCDCharacter::BeginPlay()
@@ -69,8 +75,33 @@ void ANetTPSCDCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
+	InitUI();
+	
+	//Add Input Mapping Context
+	if (APlayerController* PlayerController = Cast<APlayerController>( Controller ))
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>( PlayerController->GetLocalPlayer() ))
+		{
+			Subsystem->AddMappingContext( DefaultMappingContext , 0 );
+		}
+	}
+}
+
+void ANetTPSCDCharacter::InitUI()
+{
+	// 태어날 때 hpUI를 가져오고싶다.
+	hpUI = Cast<UHPBarWidget>( hpUIComp->GetWidget() );
+
+	// 컨트롤러가 PlayerController가 아니라면 함수를 바로 종료
+	// 즉, mainUI를 생성하지 않겠다.
+	auto pc = Cast<APlayerController>(GetController());
+	if (nullptr == pc)
+		return;
+
+	UE_LOG( LogTemp , Warning , TEXT( "ANetTPSCDCharacter::BeginPlay" ) );
+
 	// MainUI를 생성해서 기억하고싶다.
-	mainUI = CreateWidget<UMainUI>(GetWorld(), mainUIFactory);
+	mainUI = CreateWidget<UMainUI>( GetWorld() , mainUIFactory );
 	// AddToViewport하고싶다.
 	mainUI->AddToViewport();
 	// 크로스헤어를 안보이게 하고싶다.
@@ -81,21 +112,11 @@ void ANetTPSCDCharacter::BeginPlay()
 	{
 		mainUI->AddBulletUI();
 	}
-
-	//Add Input Mapping Context
-	if (APlayerController* PlayerController = Cast<APlayerController>( Controller ))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>( PlayerController->GetLocalPlayer() ))
-		{
-			Subsystem->AddMappingContext( DefaultMappingContext , 0 );
-		}
-	}
-
 }
 
 void ANetTPSCDCharacter::PickupPistol( const FInputActionValue& Value )
 {
-	if (bHasPistol)
+	if (bHasPistol || isReload)
 		return;
 
 	// 가까운 총을 검색해서 
@@ -132,13 +153,14 @@ void ANetTPSCDCharacter::PickupPistol( const FInputActionValue& Value )
 		AttachPistol( grabPistol );
 		grabPistol->SetOwner( this );
 		bHasPistol = true;
+		isReload = false;
 		mainUI->SetActiveCrosshair( true );
 	}
 }
 
 void ANetTPSCDCharacter::DropPistol( const FInputActionValue& Value )
 {
-	if (false == bHasPistol)
+	if (false == bHasPistol || isReload)
 		return;
 
 	bHasPistol = false;
@@ -211,6 +233,14 @@ void ANetTPSCDCharacter::Fire( const FInputActionValue& Value )
 	{
 		// 그곳에 폭발VFX를 배치하고싶다.
 		UGameplayStatics::SpawnEmitterAtLocation( GetWorld() , ExplosionVFXFactory , OutHit.ImpactPoint );
+
+		// 만약 부딪힌 상대방이 ANetTPSCDCharacter라면
+		// TakeDamage로 데미지를 1점 주고싶다.
+		auto otherPlayer = Cast<ANetTPSCDCharacter>( OutHit.GetActor() );
+		if (otherPlayer)
+		{
+			otherPlayer->TakeDamage( 1 );
+		}
 	}
 }
 
@@ -234,6 +264,32 @@ void ANetTPSCDCharacter::InitAmmo()
 		mainUI->ReloadBulletUI( maxBulletCount );
 	}
 	isReload = false;
+}
+
+int32 ANetTPSCDCharacter::GetHP()
+{
+	return hp;
+}
+
+void ANetTPSCDCharacter::SetHP(int32 value)
+{
+	hp = value;
+	// UI도 반영하고싶다.
+	if (mainUI) // 내꺼
+	{
+		mainUI->hp = static_cast<float>(hp) / maxHP;
+	}
+	else // 니꺼
+	{
+		hpUI->hp = static_cast<float>(hp) / maxHP;
+	}
+}
+
+void ANetTPSCDCharacter::TakeDamage(int32 damage)
+{
+	// 데미지만큼 체력을 감소하고싶다.
+	int32 newHP = FMath::Clamp<int32>( GetHP() - damage , 0 , maxHP );
+	SetHP( newHP );
 }
 
 

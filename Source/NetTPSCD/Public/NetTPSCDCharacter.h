@@ -63,6 +63,8 @@ protected:
 	// To add mapping context
 	virtual void BeginPlay();
 
+	void InitUI();
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -138,5 +140,25 @@ public:
 	// 재장전을 막고싶다.
 	// 총쏘기도 막고싶다.
 	bool isReload;
+
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly )
+	int32 maxHP = 3;
+
+	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly )
+	int32 hp = maxHP;
+
+	int32 GetHP();
+
+	void SetHP( int32 value );
+
+	void TakeDamage( int32 damage );
+
+	// 상대방의 HUD를 추가하고싶다.
+	UPROPERTY(EditDefaultsOnly)
+	class UWidgetComponent* hpUIComp;
+
+	UPROPERTY()
+	class UHPBarWidget* hpUI;
+
 };
 
