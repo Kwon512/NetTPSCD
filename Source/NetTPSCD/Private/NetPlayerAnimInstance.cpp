@@ -34,6 +34,10 @@ void UNetPlayerAnimInstance::NativeUpdateAnimation( float DeltaSeconds )
 	// pitchAngle값을 -60 ~ 60안에 가두고싶다.
 	pitchAngle = FMath::Clamp( pitchAngle , -60 , 60 );
 
+	// 플레이어의 bDie를 기억하고싶다.
+	bDie = player->bDie;
+
+
 	//FVector	forwardVector = player->GetActorForwardVector();
 	//FVector direction = FVector( 1 , 1 , 0 );
 

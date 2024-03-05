@@ -48,4 +48,7 @@ public:
 	// Reload가 끝났을 때 호출될 이벤트함수를 구현하고싶다.
 	UFUNCTION()
 	void AnimNotify_OnReloadFinished();
+
+	UPROPERTY( EditDefaultsOnly , BlueprintReadOnly)
+	bool bDie = false;
 };

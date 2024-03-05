@@ -61,7 +61,9 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 	// To add mapping context
-	virtual void BeginPlay();
+	virtual void BeginPlay() override;
+
+	virtual void Tick(float DeltaSeconds) override;
 
 	void InitUI();
 
@@ -147,6 +149,9 @@ public:
 	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly )
 	int32 hp = maxHP;
 
+	// hp를 property를 이용해서 접근하고싶다.
+	__declspec(property(get = GetHP , put = SetHP)) int32 HP;
+
 	int32 GetHP();
 
 	void SetHP( int32 value );
@@ -154,11 +159,16 @@ public:
 	void TakeDamage( int32 damage );
 
 	// 상대방의 HUD를 추가하고싶다.
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	class UWidgetComponent* hpUIComp;
 
 	UPROPERTY()
 	class UHPBarWidget* hpUI;
+
+	UPROPERTY(EditDefaultsOnly)
+	bool bDie = false;
+
+	void PrintNetLog();
 
 };
 
