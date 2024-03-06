@@ -10,7 +10,7 @@
 // Sets default values
 ANetTestActor::ANetTestActor()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	meshComp = CreateDefaultSubobject<UStaticMeshComponent>( TEXT( "meshComp" ) );
@@ -26,19 +26,21 @@ void ANetTestActor::BeginPlay()
 	Super::BeginPlay();
 
 	NetUpdateFrequency = 100;
+
+	ChangeMatColor();
 }
 
 // Called every frame
-void ANetTestActor::Tick(float DeltaTime)
+void ANetTestActor::Tick( float DeltaTime )
 {
-	Super::Tick(DeltaTime);
+	Super::Tick( DeltaTime );
 
 	PrintNetLog();
 
 	FindOwner();
 
 	SelfRotation( DeltaTime );
-	
+
 }
 
 
@@ -90,6 +92,7 @@ void ANetTestActor::FindOwner()
 	}
 }
 
+
 void ANetTestActor::SelfRotation( const float& DeltaTime )
 {
 	// 회전
@@ -97,23 +100,94 @@ void ANetTestActor::SelfRotation( const float& DeltaTime )
 	if (HasAuthority())
 	{
 		//  : 실제로 회전하고 그 결과를 rotYaw변수에 담고싶다.
-		AddActorWorldRotation( FRotator(0, 360 * DeltaTime , 0) );
+		AddActorWorldRotation( FRotator( 0 , 360 * DeltaTime , 0 ) );
 		rotYaw = GetActorRotation().Yaw;
 	}
 	// 그렇지않고 클라라면
 	else
 	{
+		currentTime += DeltaTime;
+
+		if (latestTime < KINDA_SMALL_NUMBER)
+		{
+			return;
+		}
+
+		// 비율값을 구하고싶다.
+		float alpha = currentTime / latestTime;
+		float newYaw = rotYaw + 360 * latestTime;
+		// 시작값, 끝값
+		float lerpYaw = FMath::Lerp<float>( rotYaw , newYaw , alpha );
+
 		//  현재 회전값의 Yaw값을 rotYaw값으로 반영하고싶다.
 		FRotator rot = GetActorRotation();
-		rot.Yaw = rotYaw;
+		rot.Yaw = lerpYaw;
 		SetActorRotation( rot );
 	}
 }
 
-void ANetTestActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+// OnRep_RotYaw함수가 호출되면
+void ANetTestActor::OnRep_RotYaw()
 {
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME( ANetTestActor , rotYaw );
+	// 최근시간에 현재시간값을 담는다.
+	latestTime = currentTime;
+	// 현재시간을 다시 0으로 초기화한다.
+	currentTime = 0;
 }
 
+void ANetTestActor::ChangeMatColor()
+{
+	// 재질을 dynamic으로 다시 만들고 싶다.
+	mat = meshComp->CreateDynamicMaterialInstance( 0 );
+
+	// 서버에서
+	if (HasAuthority())
+	{
+		// 타이머를 이용해서 1초마다 색을 바꾸고싶다.
+		// 타이머로 람다식, 무명함수
+		FTimerHandle handle;
+		GetWorldTimerManager().SetTimer( handle , [&]()
+		{
+			matColor = FLinearColor::MakeRandomColor();
+			//OnRep_ChangeMatColor();
+			ServerChangeMatColor( matColor );
+		} , 1 , true );
+	}
+}
+
+//void ANetTestActor::OnRep_ChangeMatColor()
+//{
+//	if (mat)
+//	{
+//		mat->SetVectorParameterValue( TEXT( "FloorColor" ) , matColor );
+//	}
+//}
+
+void ANetTestActor::ServerChangeMatColor_Implementation( FLinearColor color )
+{
+	MulticastChangeMatColor( color );
+}
+
+void ANetTestActor::ClientChangeMatColor_Implementation( FLinearColor color )
+{
+	if (mat)
+	{
+		mat->SetVectorParameterValue( TEXT( "FloorColor" ) , color );
+	}
+}
+
+void ANetTestActor::MulticastChangeMatColor_Implementation(FLinearColor color)
+{
+	if (mat)
+	{
+		mat->SetVectorParameterValue( TEXT( "FloorColor" ) , color );
+	}
+}
+
+void ANetTestActor::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const
+{
+	Super::GetLifetimeReplicatedProps( OutLifetimeProps );
+
+	DOREPLIFETIME( ANetTestActor , rotYaw );
+	//DOREPLIFETIME( ANetTestActor , matColor );
+}
