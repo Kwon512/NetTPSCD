@@ -193,6 +193,18 @@ public:
 	void MultiDetachPistol( AActor* pistol );
 
 
+	// 사용자가 총을 쏘면
+	// 서버에게 총을 쏴 달라고하고싶다.
+	// 서버에서 라인을 그려서 부딪힌것이 있다면
+	// 그 정보를 모든 클라이언트에게 보내서 총쏘기 처리를 하고싶다.
+	UFUNCTION( Server , Reliable  )
+	void ServerFire();
+	
+	UFUNCTION( NetMulticast , Reliable )
+	void MultiFire(bool bHit, const FHitResult& hitInfo );
+
+
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 

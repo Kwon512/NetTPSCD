@@ -251,6 +251,29 @@ void ANetTPSCDCharacter::Fire( const FInputActionValue& Value )
 	if (isReload)
 		return;
 
+	ServerFire();
+
+}
+
+
+void ANetTPSCDCharacter::ServerFire_Implementation()
+{
+	// - 카메라위치에서 카메라 앞방향으로
+	FHitResult OutHit;
+	FVector Start = FollowCamera->GetComponentLocation();
+	FVector End = Start + FollowCamera->GetForwardVector() * 100000;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor( this );
+	// 바라보고
+	bool bHit = GetWorld()->LineTraceSingleByChannel( OutHit , Start , End , ECollisionChannel::ECC_Visibility , Params );
+
+	MultiFire( bHit , OutHit );
+
+}
+
+void ANetTPSCDCharacter::MultiFire_Implementation( bool bHit , const FHitResult& hitInfo )
+{
+
 	// 1개 차감하고
 	bulletCount--;
 	// 총알UI를 갱신하고싶다.
@@ -265,14 +288,6 @@ void ANetTPSCDCharacter::Fire( const FInputActionValue& Value )
 	// 2. PlayerFireAnimation를 호출하고싶다.
 	anim->PlayFireAnimation();
 
-	// - 카메라위치에서 카메라 앞방향으로
-	FHitResult OutHit;
-	FVector Start = FollowCamera->GetComponentLocation();
-	FVector End = Start + FollowCamera->GetForwardVector() * 100000;
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor( this );
-	// 바라보고
-	bool bHit = GetWorld()->LineTraceSingleByChannel( OutHit , Start , End , ECollisionChannel::ECC_Visibility , Params );
 
 	// 만약 부딪힌곳이 있다면 
 	if (bHit)
@@ -436,6 +451,7 @@ void ANetTPSCDCharacter::Look( const FInputActionValue& Value )
 		AddControllerPitchInput( LookAxisVector.Y );
 	}
 }
+
 
 void ANetTPSCDCharacter::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const
 {
