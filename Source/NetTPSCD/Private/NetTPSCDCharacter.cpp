@@ -293,11 +293,11 @@ void ANetTPSCDCharacter::MultiFire_Implementation( bool bHit , const FHitResult&
 	if (bHit)
 	{
 		// 그곳에 폭발VFX를 배치하고싶다.
-		UGameplayStatics::SpawnEmitterAtLocation( GetWorld() , ExplosionVFXFactory , OutHit.ImpactPoint );
+		UGameplayStatics::SpawnEmitterAtLocation( GetWorld() , ExplosionVFXFactory , hitInfo.ImpactPoint );
 
 		// 만약 부딪힌 상대방이 ANetTPSCDCharacter라면
 		// TakeDamage로 데미지를 1점 주고싶다.
-		auto otherPlayer = Cast<ANetTPSCDCharacter>( OutHit.GetActor() );
+		auto otherPlayer = Cast<ANetTPSCDCharacter>( hitInfo.GetActor() );
 		if (otherPlayer)
 		{
 			otherPlayer->TakeDamage( 1 );
