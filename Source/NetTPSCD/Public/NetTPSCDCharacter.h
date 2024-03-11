@@ -15,6 +15,7 @@ class UInputAction;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN( MyLog , Log , All );
 
 UCLASS(config=Game)
 class ANetTPSCDCharacter : public ACharacter
@@ -82,7 +83,7 @@ protected:
 	void DropPistol(const FInputActionValue& Value);
 
 public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	UPROPERTY(Replicated)
 	bool bHasPistol = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -182,6 +183,18 @@ public:
 	// 서버2멀티 손에 붙이세요(총액터의 포인터)
 	UFUNCTION(NetMulticast, Reliable)
 	void MultiAttachPistol( AActor* pistol );
+
+	// 손에서 총을 놓고싶다.
+	// 클라2서버 총을 놓아주세요(총액의 포인터)
+	UFUNCTION( Server , Reliable, WithValidation )
+	void ServerDetachPistol( AActor* pistol );
+	// 서버2멀티 모두 총을 놓으세요(총액의 포인터)
+	UFUNCTION( NetMulticast , Reliable )
+	void MultiDetachPistol( AActor* pistol );
+
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 
 };
 

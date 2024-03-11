@@ -16,8 +16,10 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/WidgetComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
-DEFINE_LOG_CATEGORY( LogTemplateCharacter );
+DEFINE_LOG_CATEGORY(LogTemplateCharacter);
+DEFINE_LOG_CATEGORY( MyLog );
 
 //////////////////////////////////////////////////////////////////////////
 // ANetTPSCDCharacter
@@ -70,6 +72,9 @@ ANetTPSCDCharacter::ANetTPSCDCharacter()
 	// 상대방의 hpUIComp 컴포넌트를 추가하고싶다.
 	hpUIComp = CreateDefaultSubobject<UWidgetComponent>( TEXT( "hpUIComp" ) );
 	hpUIComp->SetupAttachment( RootComponent );
+
+	bReplicates = true;
+	SetReplicateMovement( true );
 }
 
 void ANetTPSCDCharacter::BeginPlay()
@@ -146,8 +151,10 @@ void ANetTPSCDCharacter::PickupPistol( const FInputActionValue& Value )
 		// 전체 검색해서
 		for (auto result : OutOverlaps)
 		{
-			// 만약 액터의 이름에 BP_Pistol이 포함되어있다면
-			if (result.GetActor()->GetActorNameOrLabel().Contains( TEXT( "BP_Pistol" ) ))
+			// 만약 액터의 오너가 없고 액터의 이름에 BP_Pistol이 포함되어있다면
+			AActor* _temp = result.GetActor();
+			if (nullptr == _temp->GetOwner() && 
+				_temp->GetActorNameOrLabel().Contains( TEXT( "BP_Pistol" ) ))
 			{
 				// 그것을 grabPistol로 하고싶다.
 				_tempGrabPistol = result.GetActor();
@@ -177,7 +184,14 @@ void ANetTPSCDCharacter::MultiAttachPistol_Implementation( AActor* pistol )
 	grabPistol->SetOwner( this );
 	bHasPistol = true;
 	isReload = false;
-	mainUI->SetActiveCrosshair( true );
+	if (mainUI)
+	{
+		mainUI->SetActiveCrosshair( true );
+	}
+}
+bool ANetTPSCDCharacter::ServerDetachPistol_Validate( AActor* pistol )
+{
+	return true;
 }
 
 
@@ -186,9 +200,18 @@ void ANetTPSCDCharacter::DropPistol( const FInputActionValue& Value )
 	if (false == bHasPistol || isReload)
 		return;
 
+	ServerDetachPistol( grabPistol );
+}
+void ANetTPSCDCharacter::ServerDetachPistol_Implementation( AActor* pistol )
+{
+	MultiDetachPistol( pistol );
+}
+void ANetTPSCDCharacter::MultiDetachPistol_Implementation( AActor* pistol )
+{
 	bHasPistol = false;
-	DetachPistol( grabPistol );
-	mainUI->SetActiveCrosshair( false );
+	DetachPistol( pistol );
+	if (mainUI)
+		mainUI->SetActiveCrosshair( false );
 }
 
 void ANetTPSCDCharacter::AttachPistol( const AActor* pistol )
@@ -343,11 +366,14 @@ void ANetTPSCDCharacter::PrintNetLog()
 }
 
 
+
 //////////////////////////////////////////////////////////////////////////
 // Input
 
 void ANetTPSCDCharacter::SetupPlayerInputComponent( UInputComponent* PlayerInputComponent )
 {
+	UE_LOG( MyLog , Warning , TEXT( "ANetTPSCDCharacter::SetupPlayerInputComponent" ) );
+
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>( PlayerInputComponent )) {
 
@@ -409,4 +435,11 @@ void ANetTPSCDCharacter::Look( const FInputActionValue& Value )
 		AddControllerYawInput( LookAxisVector.X );
 		AddControllerPitchInput( LookAxisVector.Y );
 	}
+}
+
+void ANetTPSCDCharacter::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const
+{
+	Super::GetLifetimeReplicatedProps( OutLifetimeProps );
+
+	DOREPLIFETIME( ANetTPSCDCharacter , bHasPistol );
 }
