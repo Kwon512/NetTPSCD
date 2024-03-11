@@ -68,7 +68,7 @@ ANetTPSCDCharacter::ANetTPSCDCharacter()
 		FRotator( 17.690681f , 83.344357f , 9.577745 ) );
 
 	// 상대방의 hpUIComp 컴포넌트를 추가하고싶다.
-	hpUIComp = CreateDefaultSubobject<UWidgetComponent>( TEXT("hpUIComp") );
+	hpUIComp = CreateDefaultSubobject<UWidgetComponent>( TEXT( "hpUIComp" ) );
 	hpUIComp->SetupAttachment( RootComponent );
 }
 
@@ -78,7 +78,7 @@ void ANetTPSCDCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	InitUI();
-	
+
 	//Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>( Controller ))
 	{
@@ -89,9 +89,9 @@ void ANetTPSCDCharacter::BeginPlay()
 	}
 }
 
-void ANetTPSCDCharacter::Tick(float DeltaSeconds)
+void ANetTPSCDCharacter::Tick( float DeltaSeconds )
 {
-	Super::Tick(DeltaSeconds);
+	Super::Tick( DeltaSeconds );
 
 	PrintNetLog();
 }
@@ -103,7 +103,7 @@ void ANetTPSCDCharacter::InitUI()
 
 	// 컨트롤러가 PlayerController가 아니라면 함수를 바로 종료
 	// 즉, mainUI를 생성하지 않겠다.
-	auto pc = Cast<APlayerController>(GetController());
+	auto pc = Cast<APlayerController>( GetController() );
 	if (nullptr == pc)
 		return;
 
@@ -139,6 +139,7 @@ void ANetTPSCDCharacter::PickupPistol( const FInputActionValue& Value )
 		ObjectQueryParams ,
 		FCollisionShape::MakeSphere( findPistolRadius ) );
 
+	AActor* _tempGrabPistol = nullptr;
 	// 만약 검색된 결과 있다면
 	if (bHits)
 	{
@@ -149,23 +150,36 @@ void ANetTPSCDCharacter::PickupPistol( const FInputActionValue& Value )
 			if (result.GetActor()->GetActorNameOrLabel().Contains( TEXT( "BP_Pistol" ) ))
 			{
 				// 그것을 grabPistol로 하고싶다.
-				grabPistol = result.GetActor();
+				_tempGrabPistol = result.GetActor();
 				// 반복을 그만하고싶다.
 				break;
 			}
 		}
 	}
 
-	// grabPistol이 nullptr이 아니라면 손에 붙이고싶다.
-	if (grabPistol)
+	// 만약 _tempGrabPistol이 nullptr이 아니라면
+	// 서버에게 손에 붙여달라고 요청하고싶다.
+	if (_tempGrabPistol)
 	{
-		AttachPistol( grabPistol );
-		grabPistol->SetOwner( this );
-		bHasPistol = true;
-		isReload = false;
-		mainUI->SetActiveCrosshair( true );
+		ServerAttachPistol( _tempGrabPistol );
 	}
 }
+
+void ANetTPSCDCharacter::ServerAttachPistol_Implementation( AActor* pistol )
+{
+	MultiAttachPistol( pistol );
+}
+
+void ANetTPSCDCharacter::MultiAttachPistol_Implementation( AActor* pistol )
+{
+	grabPistol = pistol;
+	AttachPistol( pistol );
+	grabPistol->SetOwner( this );
+	bHasPistol = true;
+	isReload = false;
+	mainUI->SetActiveCrosshair( true );
+}
+
 
 void ANetTPSCDCharacter::DropPistol( const FInputActionValue& Value )
 {
@@ -253,7 +267,7 @@ void ANetTPSCDCharacter::Fire( const FInputActionValue& Value )
 	}
 }
 
-void ANetTPSCDCharacter::Reload(const FInputActionValue& Value)
+void ANetTPSCDCharacter::Reload( const FInputActionValue& Value )
 {
 	// 만약 재장전 중이라면 함수를 바로 종료
 	if (isReload)
@@ -280,7 +294,7 @@ int32 ANetTPSCDCharacter::GetHP()
 	return hp;
 }
 
-void ANetTPSCDCharacter::SetHP(int32 value)
+void ANetTPSCDCharacter::SetHP( int32 value )
 {
 	hp = value;
 	// UI도 반영하고싶다.
@@ -294,7 +308,7 @@ void ANetTPSCDCharacter::SetHP(int32 value)
 	}
 }
 
-void ANetTPSCDCharacter::TakeDamage(int32 damage)
+void ANetTPSCDCharacter::TakeDamage( int32 damage )
 {
 	// 데미지만큼 체력을 감소하고싶다.
 
@@ -321,9 +335,9 @@ void ANetTPSCDCharacter::PrintNetLog()
 	// RemoteRole
 	FString remoteRole = UEnum::GetValueAsString<ENetRole>( GetRemoteRole() );
 
-	FString str = FString::Printf( TEXT( "Owner : %s\nConnection : %s\nlocalRole : %s\nremoteRole : %s" ), *owner, *conn, *localRole, *remoteRole );
+	FString str = FString::Printf( TEXT( "Owner : %s\nConnection : %s\nlocalRole : %s\nremoteRole : %s" ) , *owner , *conn , *localRole , *remoteRole );
 
-	FVector loc = GetActorLocation() + FVector(0, 0, 50);
+	FVector loc = GetActorLocation() + FVector( 0 , 0 , 50 );
 	DrawDebugString( GetWorld() , loc , str , nullptr , FColor::Yellow , 0 , false , 0.75f );
 
 }
@@ -353,7 +367,7 @@ void ANetTPSCDCharacter::SetupPlayerInputComponent( UInputComponent* PlayerInput
 
 		EnhancedInputComponent->BindAction( FireAction , ETriggerEvent::Started , this , &ANetTPSCDCharacter::Fire );
 
-		EnhancedInputComponent->BindAction( ReloadAction , ETriggerEvent::Started , this , &ANetTPSCDCharacter::Reload);
+		EnhancedInputComponent->BindAction( ReloadAction , ETriggerEvent::Started , this , &ANetTPSCDCharacter::Reload );
 	}
 	else
 	{

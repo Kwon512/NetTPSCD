@@ -1,6 +1,7 @@
 ﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
+// #pragma warning(disable:4458)
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
@@ -168,7 +169,19 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	bool bDie = false;
 
+
+	// Network ----------------------------------------------
+
 	void PrintNetLog();
+
+	// 클라2서버 손에 붙여주세요(총액터의 포인터)
+	UFUNCTION(Server, Reliable)
+	void ServerAttachPistol( AActor* pistol ); // 요청
+	//void ServerAttachPistol_Implementation( AActor* pistol ); // 응답
+
+	// 서버2멀티 손에 붙이세요(총액터의 포인터)
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiAttachPistol( AActor* pistol );
 
 };
 
