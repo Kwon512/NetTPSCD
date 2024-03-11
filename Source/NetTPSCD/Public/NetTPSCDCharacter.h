@@ -132,6 +132,7 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	int32 maxBulletCount = 21;
 
+	UPROPERTY(Replicated)
 	int32 bulletCount = maxBulletCount;
 
 	UPROPERTY( EditAnywhere , BlueprintReadOnly , Category = Input )
@@ -202,6 +203,22 @@ public:
 	
 	UFUNCTION( NetMulticast , Reliable )
 	void MultiFire(bool bHit, const FHitResult& hitInfo );
+
+
+	// 클라2서버 재장전 애니메이션을 요청
+	UFUNCTION( Server , Reliable )
+	void ServerReload();
+	// 서버2멀티 재장전애니메이션 해라
+	UFUNCTION( NetMulticast , Reliable )
+	void MultiReload();
+
+	// 클라2서버 initAmmo를 해주세요.
+	UFUNCTION( Server , Reliable )
+	void ServerInitAmmo();
+	// 서버2멀티 initAmmo를 해라
+	UFUNCTION( NetMulticast , Reliable )
+	void MultiInitAmmo();
+	// 애니메이션이 끝나면 ServerInitAmmo 가 불리면
 
 
 

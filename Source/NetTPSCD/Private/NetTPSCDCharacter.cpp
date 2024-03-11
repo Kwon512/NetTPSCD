@@ -267,15 +267,15 @@ void ANetTPSCDCharacter::ServerFire_Implementation()
 	// 바라보고
 	bool bHit = GetWorld()->LineTraceSingleByChannel( OutHit , Start , End , ECollisionChannel::ECC_Visibility , Params );
 
+	// 1개 차감하고
+	bulletCount--;
+
 	MultiFire( bHit , OutHit );
 
 }
 
 void ANetTPSCDCharacter::MultiFire_Implementation( bool bHit , const FHitResult& hitInfo )
 {
-
-	// 1개 차감하고
-	bulletCount--;
 	// 총알UI를 갱신하고싶다.
 	if (mainUI)
 	{
@@ -311,21 +311,43 @@ void ANetTPSCDCharacter::Reload( const FInputActionValue& Value )
 	if (isReload)
 		return;
 
+	ServerReload();
+}
+
+void ANetTPSCDCharacter::ServerReload_Implementation()
+{
+	MultiReload();
+}
+
+void ANetTPSCDCharacter::MultiReload_Implementation()
+{
 	isReload = true;
 	// 리로드 애니메이션을 재생.
 	auto anim = Cast<UNetPlayerAnimInstance>( GetMesh()->GetAnimInstance() );
 	anim->PlayReloadAnimation();
 }
 
-void ANetTPSCDCharacter::InitAmmo()
+void ANetTPSCDCharacter::ServerInitAmmo_Implementation()
 {
 	bulletCount = maxBulletCount;
+	MultiInitAmmo();
+}
+
+void ANetTPSCDCharacter::MultiInitAmmo_Implementation()
+{
+	InitAmmo();
+}
+
+
+void ANetTPSCDCharacter::InitAmmo()
+{
 	if (mainUI)
 	{
 		mainUI->ReloadBulletUI( maxBulletCount );
 	}
 	isReload = false;
 }
+
 
 int32 ANetTPSCDCharacter::GetHP()
 {
@@ -453,9 +475,11 @@ void ANetTPSCDCharacter::Look( const FInputActionValue& Value )
 }
 
 
+
 void ANetTPSCDCharacter::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const
 {
 	Super::GetLifetimeReplicatedProps( OutLifetimeProps );
 
 	DOREPLIFETIME( ANetTPSCDCharacter , bHasPistol );
+	DOREPLIFETIME( ANetTPSCDCharacter , bulletCount );
 }

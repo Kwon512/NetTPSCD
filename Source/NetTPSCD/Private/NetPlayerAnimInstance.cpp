@@ -71,5 +71,6 @@ void UNetPlayerAnimInstance::AnimNotify_OnReloadFinished()
 	if (nullptr == player)
 		return;
 
-	player->InitAmmo();
+	// 서버에 InitAmmo를 해달라고 요청해야한다.
+	player->ServerInitAmmo();
 }
