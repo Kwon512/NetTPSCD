@@ -2,8 +2,21 @@
 
 
 #include "MainUI.h"
+
+#include "Components/Button.h"
+#include "Components/CanvasPanel.h"
 #include "Components/Image.h"
 #include "Components/UniformGridPanel.h"
+
+void UMainUI::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	SetShowGameOverUI( false );
+	btn_retry->OnClicked.AddDynamic( this , &UMainUI::OnMyClickRetry );
+	btn_quit->OnClicked.AddDynamic( this , &UMainUI::OnMyClickQuit );
+
+}
 
 void UMainUI::SetActiveCrosshair( bool bActive )
 {
@@ -43,7 +56,7 @@ void UMainUI::AddBulletUI()
 }
 
 // index는 0부터 시작한다.
-void UMainUI::RemoveBulletUI(int32 index)
+void UMainUI::RemoveBulletUI( int32 index )
 {
 	// grid의 index위치의 자식을 제거한다.
 	grid_bullet->RemoveChildAt( index );
@@ -52,4 +65,23 @@ void UMainUI::RemoveBulletUI(int32 index)
 void UMainUI::PlayHitAnim()
 {
 	PlayAnimation( HitAnimation );
+}
+
+void UMainUI::SetShowGameOverUI( bool bShow )
+{
+	if (bShow){
+		gameOverUI->SetVisibility( ESlateVisibility::Visible );
+	}else{
+		gameOverUI->SetVisibility( ESlateVisibility::Hidden );
+	}
+}
+
+void UMainUI::OnMyClickRetry()
+{
+	UE_LOG(LogTemp, Warning, TEXT("OnMyClickRetry"));
+}
+
+void UMainUI::OnMyClickQuit()
+{
+	UE_LOG( LogTemp , Warning , TEXT( "OnMyClickQuit" ) );
 }

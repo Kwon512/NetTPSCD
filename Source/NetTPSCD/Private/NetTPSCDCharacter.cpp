@@ -515,6 +515,10 @@ void ANetTPSCDCharacter::DamageProcess()
 	// 화면을 회색으로 보이게 하고싶다.
 	FollowCamera->PostProcessSettings.ColorSaturation = FVector4( 0 , 0 , 0 , 1 );
 	// 게임오버UI를 보이게하고싶다.
+	if (mainUI)
+	{
+		mainUI->SetShowGameOverUI( true );
+	}
 }
 
 void ANetTPSCDCharacter::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const

@@ -15,6 +15,10 @@ class NETTPSCD_API UMainUI : public UUserWidget
 	GENERATED_BODY()
 
 public:
+
+	virtual void NativeConstruct() override;
+
+
 	// ImageCrosshair를 BindWidget 해보세요.
 	UPROPERTY(EditDefaultsOnly, meta=(BindWidget))
 	class UImage* ImageCrosshair;
@@ -45,4 +49,20 @@ public:
 
 	void PlayHitAnim();
 
+	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )
+	class UCanvasPanel* gameOverUI;
+
+	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )
+	class UButton* btn_retry;
+
+	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )
+	class UButton* btn_quit;
+
+	void SetShowGameOverUI( bool bShow );
+
+	UFUNCTION()
+	void OnMyClickRetry();
+
+	UFUNCTION()
+	void OnMyClickQuit();
 };
