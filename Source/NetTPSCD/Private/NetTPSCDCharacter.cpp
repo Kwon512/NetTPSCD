@@ -213,7 +213,7 @@ bool ANetTPSCDCharacter::ServerDetachPistol_Validate( AActor* pistol )
 
 void ANetTPSCDCharacter::DropPistol( const FInputActionValue& Value )
 {
-	if (false == bHasPistol || isReload || false == IsLocallyControlled())
+	if (false == bHasPistol || isReload)
 		return;
 
 	ServerDetachPistol( grabPistol );
@@ -400,7 +400,10 @@ void ANetTPSCDCharacter::SetHP( int32 value )
 	{
 		bDie = true;
 		// 총을 놓고싶다.
-		DropPistol(FInputActionValue());
+		//DropPistol(FInputActionValue());
+		if (grabPistol)
+			MultiDetachPistol( grabPistol );
+
 		// 이동을 막고싶다.
 		GetCharacterMovement()->DisableMovement();
 	}
