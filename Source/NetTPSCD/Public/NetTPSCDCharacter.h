@@ -156,7 +156,7 @@ public:
 	void OnRep_HP();
 
 	// hp를 property를 이용해서 접근하고싶다.
-	__declspec(property(get = GetHP , put = SetHP)) int32 HP;
+	//__declspec(property(get = GetHP , put = SetHP)) int32 HP;
 
 	int32 GetHP();
 
@@ -171,7 +171,7 @@ public:
 	UPROPERTY()
 	class UHPBarWidget* hpUI;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(Replicated, EditDefaultsOnly)
 	bool bDie = false;
 
 
@@ -223,7 +223,7 @@ public:
 	void MultiInitAmmo();
 	// 애니메이션이 끝나면 ServerInitAmmo 가 불리면
 
-
+	void DamageProcess();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 

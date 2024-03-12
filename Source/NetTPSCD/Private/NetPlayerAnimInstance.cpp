@@ -74,3 +74,12 @@ void UNetPlayerAnimInstance::AnimNotify_OnReloadFinished()
 	// 서버에 InitAmmo를 해달라고 요청해야한다.
 	player->ServerInitAmmo();
 }
+
+void UNetPlayerAnimInstance::AnimNotify_DieEnd()
+{
+	// 플레이어의 DamageProcess를 호출하고싶다.
+	if (player)
+	{
+		player->DamageProcess();
+	}
+}

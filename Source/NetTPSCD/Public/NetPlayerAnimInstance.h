@@ -51,4 +51,7 @@ public:
 
 	UPROPERTY( EditDefaultsOnly , BlueprintReadOnly)
 	bool bDie = false;
+
+	UFUNCTION()
+	void AnimNotify_DieEnd();
 };

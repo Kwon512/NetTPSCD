@@ -106,7 +106,7 @@ void ANetTPSCDCharacter::Tick( float DeltaSeconds )
 		auto cam = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
 		FVector dir = cam->GetCameraLocation() - hpUIComp->GetComponentLocation();
 
-		hpUIComp->SetWorldRotation( dir.GetSafeNormal2D().ToOrientationRotator());
+		hpUIComp->SetWorldRotation( dir.GetSafeNormal2D().ToOrientationRotator() );
 	}
 }
 
@@ -213,7 +213,7 @@ bool ANetTPSCDCharacter::ServerDetachPistol_Validate( AActor* pistol )
 
 void ANetTPSCDCharacter::DropPistol( const FInputActionValue& Value )
 {
-	if (false == bHasPistol || isReload)
+	if (false == bHasPistol || isReload || false == IsLocallyControlled())
 		return;
 
 	ServerDetachPistol( grabPistol );
@@ -377,11 +377,7 @@ void ANetTPSCDCharacter::OnRep_HP()
 	{
 		mainUI->hp = newHP;
 		mainUI->PlayHitAnim();
-		// 죽었다면 카메라의 Saturation값을 0,0,0,1로 하고싶다.
-		if (mainUI->hp <= 0)
-		{
-			FollowCamera->PostProcessSettings.ColorSaturation = FVector4( 0 , 0 , 0 , 1 );
-		}
+
 	}
 	else // 니꺼
 	{
@@ -395,26 +391,28 @@ int32 ANetTPSCDCharacter::GetHP()
 	return hp;
 }
 
+// 서버에서 호출됨.
 void ANetTPSCDCharacter::SetHP( int32 value )
 {
 	hp = value;
+
+	if (hp <= 0)
+	{
+		bDie = true;
+		// 총을 놓고싶다.
+		DropPistol(FInputActionValue());
+		// 이동을 막고싶다.
+		GetCharacterMovement()->DisableMovement();
+	}
+
 	OnRep_HP();
 }
 
 void ANetTPSCDCharacter::TakeDamage( int32 damage )
 {
 	// 데미지만큼 체력을 감소하고싶다.
-
-	HP = FMath::Clamp<int32>( HP - damage , 0 , maxHP );
-
-	// 만약 체력이 0 이하라면 bDie를 true로 하고싶다.
-	if (HP <= 0)
-	{
-		bDie = true;
-	}
-
-	/*int32 newHP = FMath::Clamp<int32>( GetHP() - damage , 0 , maxHP );
-	SetHP( newHP );*/
+	int32 newHP = FMath::Clamp<int32>( GetHP() - damage , 0 , maxHP );
+	SetHP( newHP );
 }
 
 void ANetTPSCDCharacter::PrintNetLog()
@@ -508,6 +506,16 @@ void ANetTPSCDCharacter::Look( const FInputActionValue& Value )
 }
 
 
+void ANetTPSCDCharacter::DamageProcess()
+{
+	// 죽음 애니메이션이 끝나면
+	// 마우스 커서를 보이게하고싶다.
+	auto pc = GetWorld()->GetFirstPlayerController();
+	pc->SetShowMouseCursor( true );
+	// 화면을 회색으로 보이게 하고싶다.
+	FollowCamera->PostProcessSettings.ColorSaturation = FVector4( 0 , 0 , 0 , 1 );
+	// 게임오버UI를 보이게하고싶다.
+}
 
 void ANetTPSCDCharacter::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const
 {
@@ -516,4 +524,5 @@ void ANetTPSCDCharacter::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& 
 	DOREPLIFETIME( ANetTPSCDCharacter , bHasPistol );
 	DOREPLIFETIME( ANetTPSCDCharacter , bulletCount );
 	DOREPLIFETIME( ANetTPSCDCharacter , hp );
+	DOREPLIFETIME( ANetTPSCDCharacter , bDie );
 }
