@@ -149,8 +149,11 @@ public:
 	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly )
 	int32 maxHP = 3;
 
-	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly )
+	UPROPERTY(ReplicatedUsing=OnRep_HP, EditDefaultsOnly, BlueprintReadOnly )
 	int32 hp = maxHP;
+
+	UFUNCTION()
+	void OnRep_HP();
 
 	// hp를 property를 이용해서 접근하고싶다.
 	__declspec(property(get = GetHP , put = SetHP)) int32 HP;
@@ -202,7 +205,7 @@ public:
 	void ServerFire();
 	
 	UFUNCTION( NetMulticast , Reliable )
-	void MultiFire(bool bHit, const FHitResult& hitInfo );
+	void MultiFire(bool bHit, const FHitResult& hitInfo, int32 newBulletCount );
 
 
 	// 클라2서버 재장전 애니메이션을 요청

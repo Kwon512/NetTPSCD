@@ -18,7 +18,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
-DEFINE_LOG_CATEGORY(LogTemplateCharacter);
+DEFINE_LOG_CATEGORY( LogTemplateCharacter );
 DEFINE_LOG_CATEGORY( MyLog );
 
 //////////////////////////////////////////////////////////////////////////
@@ -153,7 +153,7 @@ void ANetTPSCDCharacter::PickupPistol( const FInputActionValue& Value )
 		{
 			// 만약 액터의 오너가 없고 액터의 이름에 BP_Pistol이 포함되어있다면
 			AActor* _temp = result.GetActor();
-			if (nullptr == _temp->GetOwner() && 
+			if (nullptr == _temp->GetOwner() &&
 				_temp->GetActorNameOrLabel().Contains( TEXT( "BP_Pistol" ) ))
 			{
 				// 그것을 grabPistol로 하고싶다.
@@ -267,15 +267,25 @@ void ANetTPSCDCharacter::ServerFire_Implementation()
 	// 바라보고
 	bool bHit = GetWorld()->LineTraceSingleByChannel( OutHit , Start , End , ECollisionChannel::ECC_Visibility , Params );
 
-	// 1개 차감하고
-	bulletCount--;
+	if (bHit)
+	{
+		// 만약 부딪힌 상대방이 ANetTPSCDCharacter라면
+		// TakeDamage로 데미지를 1점 주고싶다.
+		auto otherPlayer = Cast<ANetTPSCDCharacter>( OutHit.GetActor() );
+		if (otherPlayer)
+		{
+			otherPlayer->TakeDamage( 1 );
+		}
+	}
 
-	MultiFire( bHit , OutHit );
+	MultiFire( bHit , OutHit , bulletCount - 1 );
 
 }
 
-void ANetTPSCDCharacter::MultiFire_Implementation( bool bHit , const FHitResult& hitInfo )
+void ANetTPSCDCharacter::MultiFire_Implementation( bool bHit , const FHitResult& hitInfo , int32 newBulletCount )
 {
+	// 1개 차감하고
+	bulletCount = newBulletCount;
 	// 총알UI를 갱신하고싶다.
 	if (mainUI)
 	{
@@ -295,13 +305,7 @@ void ANetTPSCDCharacter::MultiFire_Implementation( bool bHit , const FHitResult&
 		// 그곳에 폭발VFX를 배치하고싶다.
 		UGameplayStatics::SpawnEmitterAtLocation( GetWorld() , ExplosionVFXFactory , hitInfo.ImpactPoint );
 
-		// 만약 부딪힌 상대방이 ANetTPSCDCharacter라면
-		// TakeDamage로 데미지를 1점 주고싶다.
-		auto otherPlayer = Cast<ANetTPSCDCharacter>( hitInfo.GetActor() );
-		if (otherPlayer)
-		{
-			otherPlayer->TakeDamage( 1 );
-		}
+
 	}
 }
 
@@ -349,6 +353,20 @@ void ANetTPSCDCharacter::InitAmmo()
 }
 
 
+void ANetTPSCDCharacter::OnRep_HP()
+{
+	// UI도 반영하고싶다.
+	float newHP = static_cast<float>(hp) / maxHP;
+	if (mainUI) // 내꺼
+	{
+		mainUI->hp = newHP;
+	}
+	else // 니꺼
+	{
+		hpUI->hp = newHP;
+	}
+}
+
 int32 ANetTPSCDCharacter::GetHP()
 {
 	return hp;
@@ -357,15 +375,7 @@ int32 ANetTPSCDCharacter::GetHP()
 void ANetTPSCDCharacter::SetHP( int32 value )
 {
 	hp = value;
-	// UI도 반영하고싶다.
-	if (mainUI) // 내꺼
-	{
-		mainUI->hp = static_cast<float>(hp) / maxHP;
-	}
-	else // 니꺼
-	{
-		hpUI->hp = static_cast<float>(hp) / maxHP;
-	}
+	OnRep_HP();
 }
 
 void ANetTPSCDCharacter::TakeDamage( int32 damage )
@@ -482,4 +492,5 @@ void ANetTPSCDCharacter::GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& 
 
 	DOREPLIFETIME( ANetTPSCDCharacter , bHasPistol );
 	DOREPLIFETIME( ANetTPSCDCharacter , bulletCount );
+	DOREPLIFETIME( ANetTPSCDCharacter , hp );
 }
