@@ -98,7 +98,7 @@ void ANetTPSCDCharacter::Tick( float DeltaSeconds )
 {
 	Super::Tick( DeltaSeconds );
 
-	// PrintNetLog();
+	PrintNetLog();
 
 	// hpUIComp를 빌보드 처리 하고싶다.
 	if (hpUIComp && hpUIComp->GetVisibleFlag())
@@ -429,7 +429,9 @@ void ANetTPSCDCharacter::PrintNetLog()
 	// RemoteRole
 	FString remoteRole = UEnum::GetValueAsString<ENetRole>( GetRemoteRole() );
 
-	FString str = FString::Printf( TEXT( "Owner : %s\nConnection : %s\nlocalRole : %s\nremoteRole : %s" ) , *owner , *conn , *localRole , *remoteRole );
+	FString locallyController = IsLocallyControlled() ? TEXT( "Yes" ) : TEXT( "No" );
+
+	FString str = FString::Printf( TEXT( "Owner : %s\nConnection : %s\nlocalRole : %s\nremoteRole : %s\nlocallyController : %s" ) , *owner , *conn , *localRole , *remoteRole, *locallyController );
 
 	FVector loc = GetActorLocation() + FVector( 0 , 0 , 50 );
 	DrawDebugString( GetWorld() , loc , str , nullptr , FColor::Yellow , 0 , false , 0.75f );
