@@ -98,21 +98,37 @@ void ANetTPSCDCharacter::Tick( float DeltaSeconds )
 {
 	Super::Tick( DeltaSeconds );
 
-	PrintNetLog();
+	// PrintNetLog();
+
+	// hpUIComp를 빌보드 처리 하고싶다.
+	if (hpUIComp && hpUIComp->GetVisibleFlag())
+	{
+		auto cam = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
+		FVector dir = cam->GetCameraLocation() - hpUIComp->GetComponentLocation();
+
+		hpUIComp->SetWorldRotation( dir.GetSafeNormal2D().ToOrientationRotator());
+	}
 }
 
 void ANetTPSCDCharacter::InitUI()
 {
 	// 태어날 때 hpUI를 가져오고싶다.
-	hpUI = Cast<UHPBarWidget>( hpUIComp->GetWidget() );
+	if (nullptr == hpUI)
+	{
+		hpUI = Cast<UHPBarWidget>( hpUIComp->GetWidget() );
+	}
 
 	// 컨트롤러가 PlayerController가 아니라면 함수를 바로 종료
 	// 즉, mainUI를 생성하지 않겠다.
-	auto pc = Cast<APlayerController>( GetController() );
-	if (nullptr == pc)
+	auto pc = Cast<APlayerController>( Controller );
+	if (nullptr == pc || false == IsLocallyControlled())
+	{
 		return;
+	}
+	UE_LOG( LogTemp , Warning , TEXT( "ANetTPSCDCharacter::InitUI" ) );
 
-	UE_LOG( LogTemp , Warning , TEXT( "ANetTPSCDCharacter::BeginPlay" ) );
+	// mainUI를 생성한다면 hpUIComp를 비활성화 하고싶다.
+	hpUIComp->SetVisibility( false );
 
 	// MainUI를 생성해서 기억하고싶다.
 	mainUI = CreateWidget<UMainUI>( GetWorld() , mainUIFactory );
@@ -360,11 +376,18 @@ void ANetTPSCDCharacter::OnRep_HP()
 	if (mainUI) // 내꺼
 	{
 		mainUI->hp = newHP;
+		mainUI->PlayHitAnim();
+		// 죽었다면 카메라의 Saturation값을 0,0,0,1로 하고싶다.
+		if (mainUI->hp <= 0)
+		{
+			FollowCamera->PostProcessSettings.ColorSaturation = FVector4( 0 , 0 , 0 , 1 );
+		}
 	}
 	else // 니꺼
 	{
 		hpUI->hp = newHP;
 	}
+
 }
 
 int32 ANetTPSCDCharacter::GetHP()
