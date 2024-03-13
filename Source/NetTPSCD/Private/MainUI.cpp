@@ -85,8 +85,8 @@ void UMainUI::OnMyClickRetry()
 	pc->SetShowMouseCursor( false );
 	// 게임오버 UI를 그리지 않고싶다.
 	SetShowGameOverUI( false );
-	// ServerRetry를 호출하고싶다.
-	pc->ServerRetry();
+	// ServerRetrySpectator를 호출하고싶다.
+	pc->ServerRetrySpectator();
 }
 
 void UMainUI::OnMyClickQuit()
