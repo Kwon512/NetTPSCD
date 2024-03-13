@@ -65,6 +65,8 @@ protected:
 	// To add mapping context
 	virtual void BeginPlay() override;
 
+	virtual void PossessedBy(AController* NewController) override;
+
 	virtual void Tick(float DeltaSeconds) override;
 
 	void InitUI();
@@ -120,11 +122,6 @@ public:
 	// - 폭발VFX공장
 	UPROPERTY(EditDefaultsOnly)
 	class UParticleSystem* ExplosionVFXFactory;
-
-	// MainUI를 화면에 보이게하고 싶다.
-	// BeginPlay에서 MainUI를 생성해서 기억하고 AddToViewport하고싶다.
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<class UMainUI> mainUIFactory;
 
 	UPROPERTY()
 	class UMainUI* mainUI;

@@ -3,6 +3,7 @@
 
 #include "MainUI.h"
 
+#include "NetPlayerController.h"
 #include "Components/Button.h"
 #include "Components/CanvasPanel.h"
 #include "Components/Image.h"
@@ -78,7 +79,14 @@ void UMainUI::SetShowGameOverUI( bool bShow )
 
 void UMainUI::OnMyClickRetry()
 {
-	UE_LOG(LogTemp, Warning, TEXT("OnMyClickRetry"));
+	// 플레이어 컨트롤러를 가져오고싶다.
+	auto pc = Cast<ANetPlayerController>(GetWorld()->GetFirstPlayerController());
+	// 마우스 커서를 안보이게 하고싶다.
+	pc->SetShowMouseCursor( false );
+	// 게임오버 UI를 그리지 않고싶다.
+	SetShowGameOverUI( false );
+	// ServerRetry를 호출하고싶다.
+	pc->ServerRetry();
 }
 
 void UMainUI::OnMyClickQuit()

@@ -13,6 +13,7 @@
 #include "InputActionValue.h"
 #include "MainUI.h"
 #include "NetPlayerAnimInstance.h"
+#include "NetPlayerController.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/WidgetComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -94,6 +95,13 @@ void ANetTPSCDCharacter::BeginPlay()
 	}
 }
 
+void ANetTPSCDCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	InitUI();
+}
+
 void ANetTPSCDCharacter::Tick( float DeltaSeconds )
 {
 	Super::Tick( DeltaSeconds );
@@ -120,9 +128,15 @@ void ANetTPSCDCharacter::InitUI()
 
 	// 컨트롤러가 PlayerController가 아니라면 함수를 바로 종료
 	// 즉, mainUI를 생성하지 않겠다.
-	auto pc = Cast<APlayerController>( Controller );
-	if (nullptr == pc || false == IsLocallyControlled())
+	auto pc = Cast<ANetPlayerController>( Controller );
+	if (nullptr == pc)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("%s : nullptr == pc"), __FUNCTION__);
+		return;
+	}
+	if (false == IsLocallyControlled())
+	{
+		UE_LOG( LogTemp , Warning , TEXT( "%s : false == IsLocallyControlled()" ) , __FUNCTION__ );
 		return;
 	}
 	UE_LOG( LogTemp , Warning , TEXT( "ANetTPSCDCharacter::InitUI" ) );
@@ -130,17 +144,25 @@ void ANetTPSCDCharacter::InitUI()
 	// mainUI를 생성한다면 hpUIComp를 비활성화 하고싶다.
 	hpUIComp->SetVisibility( false );
 
-	// MainUI를 생성해서 기억하고싶다.
-	mainUI = CreateWidget<UMainUI>( GetWorld() , mainUIFactory );
-	// AddToViewport하고싶다.
-	mainUI->AddToViewport();
-	// 크로스헤어를 안보이게 하고싶다.
-	mainUI->SetActiveCrosshair( false );
-
-	// 총알 UI를 최대 총알 갯수만큼 생성해주고싶다.
-	for (int32 i = 0; i < maxBulletCount; i++)
+	if (nullptr == pc->mainUI)
 	{
-		mainUI->AddBulletUI();
+		// MainUI를 생성해서 기억하고싶다.
+		pc->mainUI = CreateWidget<UMainUI>( GetWorld() , pc->mainUIFactory );
+		// AddToViewport하고싶다.
+		pc->mainUI->AddToViewport();
+		// 크로스헤어를 안보이게 하고싶다.
+		pc->mainUI->SetActiveCrosshair( false );
+	}
+
+	// 만들어진 mainUI를 기억하고싶다.
+	mainUI = pc->mainUI;
+
+	// 체력을 초기화하고싶다.
+	// 총알UI를 최대갯수로 초기화하고싶다.
+	if (mainUI)
+	{
+		mainUI->hp = 1.0f;
+		mainUI->ReloadBulletUI( maxBulletCount );
 	}
 }
 
