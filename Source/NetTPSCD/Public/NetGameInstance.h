@@ -28,8 +28,10 @@ public:
 	// 세션생성응답함수
 	void OnMyCreateRoomComplete( FName sessionName , bool bWasSuccessful );
 
-
+	TSharedPtr<FOnlineSessionSearch> roomSearch;
 	// 세션검색요청
+	void FindOtherRooms();
 	// 세션검색응답
+	void OnMyFindOtherRoomsComplete( bool bWasSuccessful );
 	
 };

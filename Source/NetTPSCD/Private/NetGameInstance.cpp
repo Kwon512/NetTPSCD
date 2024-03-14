@@ -5,6 +5,7 @@
 
 #include "OnlineSessionSettings.h"
 #include "OnlineSubsystem.h"
+#include "Online/OnlineSessionNames.h"
 
 void UNetGameInstance::Init()
 {
@@ -15,16 +16,19 @@ void UNetGameInstance::Init()
 		sessionInterface = subsystem->GetSessionInterface();
 
 		sessionInterface->OnCreateSessionCompleteDelegates.AddUObject( this , &UNetGameInstance::OnMyCreateRoomComplete );
+
+		sessionInterface->OnFindSessionsCompleteDelegates.AddUObject( this , &UNetGameInstance::OnMyFindOtherRoomsComplete );
+
 	}
 
-	//FTimerHandle handle;
-	//GetTimerManager().SetTimer( handle , [&]()
-	//{
-	//	CreateRoom(10, hostName );
-	//} , 5 , false );
+	FTimerHandle handle;
+	GetTimerManager().SetTimer( handle , [&]()
+	{
+		FindOtherRooms();
+	} , 5 , false );
 }
 
-void UNetGameInstance::CreateRoom(int32 maxPlayerCount, FString roomName)
+void UNetGameInstance::CreateRoom( int32 maxPlayerCount , FString roomName )
 {
 	FOnlineSessionSettings setting;
 
@@ -44,21 +48,51 @@ void UNetGameInstance::CreateRoom(int32 maxPlayerCount, FString roomName)
 	setting.NumPublicConnections = maxPlayerCount;
 	// 7. 커스텀 정보 설정
 	setting.Set( TEXT( "HOST_NAME" ) , hostName , EOnlineDataAdvertisementType::ViaOnlineServiceAndPing );
-	setting.Set( TEXT( "ROOM_NAME" ) , roomName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing );
+	setting.Set( TEXT( "ROOM_NAME" ) , roomName , EOnlineDataAdvertisementType::ViaOnlineServiceAndPing );
 	// 8. netID 찾기
 	FUniqueNetIdPtr netID = GetWorld()->GetFirstLocalPlayerFromController()->GetUniqueNetIdForPlatformUser().GetUniqueNetId();
 
-	UE_LOG( LogTemp , Warning , TEXT( "CreateRoom Start!!! roomNamd : %s, netID : %s" ) , *roomName, *netID->ToString() );
+	UE_LOG( LogTemp , Warning , TEXT( "CreateRoom Start!!! roomNamd : %s, netID : %s" ) , *roomName , *netID->ToString() );
 
-
-
-	sessionInterface->CreateSession( *netID, FName( *roomName ) , setting );
+	sessionInterface->CreateSession( *netID , FName( *roomName ) , setting );
 
 
 }
 
-void UNetGameInstance::OnMyCreateRoomComplete(FName sessionName, bool bWasSuccessful)
+void UNetGameInstance::OnMyCreateRoomComplete( FName sessionName , bool bWasSuccessful )
 {
 	UE_LOG( LogTemp , Warning , TEXT( "OnMyCreateRoomComplete!!! sessionName : %s, bWasSuccessful : %d" ) , *sessionName.ToString() , bWasSuccessful );
+}
+
+void UNetGameInstance::FindOtherRooms()
+{
+	// 1. FOnlineSessionSearch객체를 생성
+	roomSearch = MakeShareable( new FOnlineSessionSearch() );
+	// 2. 세션 검색 조건 설정
+	roomSearch->QuerySettings.Set( SEARCH_PRESENCE , true , EOnlineComparisonOp::Equals );
+	// 3. 최대 검색 갯수를 정하고싶다.
+	roomSearch->MaxSearchResults = 10;
+	// 4. 랜선인지 아닌지를 정하고싶다.
+	auto subSys = IOnlineSubsystem::Get();
+	roomSearch->bIsLanQuery = subSys->GetSubsystemName().IsEqual( "NULL" );
+
+	// 5. 검색을 하고싶다.
+	sessionInterface->FindSessions( 0 , roomSearch.ToSharedRef() );
+
+}
+
+void UNetGameInstance::OnMyFindOtherRoomsComplete( bool bWasSuccessful )
+{
+	UE_LOG( LogTemp , Warning , TEXT( "%d" ) , bWasSuccessful );
+
+	for (auto r : roomSearch->SearchResults)
+	{
+		if (false == r.IsValid())
+			continue;
+
+		FString roomName;
+		r.Session.SessionSettings.Get( TEXT( "ROOM_NAME" ) , roomName );
+		UE_LOG( LogTemp , Warning , TEXT( "%s" ) , *roomName );
+	}
 }
 
