@@ -83,7 +83,7 @@ void UNetGameInstance::FindOtherRooms()
 
 void UNetGameInstance::OnMyFindOtherRoomsComplete( bool bWasSuccessful )
 {
-	UE_LOG( LogTemp , Warning , TEXT( "%d" ) , bWasSuccessful );
+	UE_LOG( LogTemp , Warning , TEXT( "OnMyFindOtherRoomsComplete : %d" ) , bWasSuccessful );
 
 	for (auto r : roomSearch->SearchResults)
 	{
