@@ -6,6 +6,7 @@
 #include "NetGameInstance.h"
 #include "Components/Button.h"
 #include "Components/EditableText.h"
+#include "Components/ScrollBox.h"
 #include "Components/Slider.h"
 #include "Components/TextBlock.h"
 #include "Components/WidgetSwitcher.h"
@@ -25,6 +26,7 @@ void ULobbyWidget::NativeConstruct()
 	gi = GetWorld()->GetGameInstance<UNetGameInstance>();
 
 	btn_doCreateRoom->OnClicked.AddDynamic( this , &ULobbyWidget::OnMyClicked_doCreateRoom );
+	btn_doFindRoomList->OnClicked.AddDynamic( this , &ULobbyWidget::OnMyDoFindRoomList );
 
 	btn_goCreateRoom->OnClicked.AddDynamic( this , &ULobbyWidget::OnMyGoCreateRoom );
 	btn_goFindRoom->OnClicked.AddDynamic( this , &ULobbyWidget::OnMyGoFindRoom );
@@ -41,7 +43,7 @@ void ULobbyWidget::NativeConstruct()
 	slider_maxPlayer->MouseUsesStep = true;
 }
 
-void ULobbyWidget::OnMyValueChage_maxPlayer(float value)
+void ULobbyWidget::OnMyValueChage_maxPlayer( float value )
 {
 	text_maxPlayer->SetText( FText::AsNumber( value ) );
 }
@@ -50,10 +52,10 @@ void ULobbyWidget::OnMyClicked_doCreateRoom()
 {
 	// 만약 방이름이 비어있으면 함수를 종료하고싶다.
 	FString roomName = edit_roomName->GetText().ToString();
-	
+
 	if (roomName.TrimStartAndEnd().IsEmpty())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("방 이름을 안 적었어요!!"));
+		UE_LOG( LogTemp , Warning , TEXT( "방 이름을 안 적었어요!!" ) );
 		return;
 	}
 
@@ -75,7 +77,7 @@ void ULobbyWidget::OnMyClicked_doCreateRoom()
 	gi->CreateRoom( maxPlayer , roomName );
 }
 
-void ULobbyWidget::SwitchPanel(int32 index)
+void ULobbyWidget::SwitchPanel( int32 index )
 {
 	widgetSwitcherLobby->SetActiveWidgetIndex( index );
 }
@@ -93,4 +95,13 @@ void ULobbyWidget::OnMyGoCreateRoom()
 void ULobbyWidget::OnMyGoFindRoom()
 {
 	SwitchPanel( SWITCHER_INDEX_FINDROOM );
+}
+
+void ULobbyWidget::OnMyDoFindRoomList()
+{
+	scroll_roomList->ClearChildren();
+	if (gi)
+	{
+		gi->FindOtherRooms();
+	}
 }

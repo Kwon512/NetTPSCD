@@ -68,4 +68,15 @@ public:
 	UFUNCTION()
 	void OnMyGoFindRoom();
 
+	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )
+	class UScrollBox* scroll_roomList;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class URoomInfoWidget> roomInfoFactory;
+
+	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )
+	class UButton* btn_doFindRoomList;
+
+	UFUNCTION()
+	void OnMyDoFindRoomList();
 };

@@ -92,7 +92,24 @@ void UNetGameInstance::OnMyFindOtherRoomsComplete( bool bWasSuccessful )
 
 		FString roomName;
 		r.Session.SessionSettings.Get( TEXT( "ROOM_NAME" ) , roomName );
-		UE_LOG( LogTemp , Warning , TEXT( "%s" ) , *roomName );
+
+		FString _hostName;
+		r.Session.SessionSettings.Get( TEXT( "HOST_NAME" ) , _hostName );
+
+		FString userName = r.Session.OwningUserName;
+
+		int32 max = r.Session.SessionSettings.NumPublicConnections;
+
+		// 현재 입장 플레이어 수 = 최대 - 입장가능 수
+		int32 current = max - r.Session.NumOpenPublicConnections;
+		FString playerCount = FString::Printf( TEXT( "%d / %d" ) , current , max );
+
+		FString pingMS = FString::Printf( TEXT( "%dms" ) , r.PingInMs);
+
+		UE_LOG( LogTemp , Warning , TEXT( "RoomName : %s, HostName:%s, UserName : %s, PlayerCount : %s, Ping : %s" ) , *roomName, *_hostName , *userName, *playerCount, *pingMS );
+
+
+
 	}
 }
 
