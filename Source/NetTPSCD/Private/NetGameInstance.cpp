@@ -19,13 +19,8 @@ void UNetGameInstance::Init()
 
 		sessionInterface->OnFindSessionsCompleteDelegates.AddUObject( this , &UNetGameInstance::OnMyFindOtherRoomsComplete );
 
+		sessionInterface->OnJoinSessionCompleteDelegates.AddUObject( this , &UNetGameInstance::OnMyJoinRoomComplete );
 	}
-
-	FTimerHandle handle;
-	GetTimerManager().SetTimer( handle , [&]()
-	{
-		FindOtherRooms();
-	} , 5 , false );
 }
 
 void UNetGameInstance::CreateRoom( int32 maxPlayerCount , FString roomName )
@@ -62,6 +57,14 @@ void UNetGameInstance::CreateRoom( int32 maxPlayerCount , FString roomName )
 void UNetGameInstance::OnMyCreateRoomComplete( FName sessionName , bool bWasSuccessful )
 {
 	UE_LOG( LogTemp , Warning , TEXT( "OnMyCreateRoomComplete!!! sessionName : %s, bWasSuccessful : %d" ) , *sessionName.ToString() , bWasSuccessful );
+
+	// 방을 생성했다면
+	if (bWasSuccessful)
+	{
+		// 서버는 세계 여행을 떠나고싶다. 어디로???
+		FString url = TEXT( "/Game/Net/Maps/BattleMap?listen" );
+		GetWorld()->ServerTravel( url );
+	}
 }
 
 void UNetGameInstance::FindOtherRooms()
@@ -79,37 +82,77 @@ void UNetGameInstance::FindOtherRooms()
 	// 5. 검색을 하고싶다.
 	sessionInterface->FindSessions( 0 , roomSearch.ToSharedRef() );
 
+	if (onFindingRoomsDelegate.IsBound())
+	{
+		onFindingRoomsDelegate.Broadcast( true );
+	}
+
 }
 
 void UNetGameInstance::OnMyFindOtherRoomsComplete( bool bWasSuccessful )
 {
+	if (onFindingRoomsDelegate.IsBound())
+	{
+		onFindingRoomsDelegate.Broadcast( false );
+	}
+
 	UE_LOG( LogTemp , Warning , TEXT( "OnMyFindOtherRoomsComplete : %d" ) , bWasSuccessful );
 
-	for (auto r : roomSearch->SearchResults)
+	for (int32 i = 0; i < roomSearch->SearchResults.Num(); i++)
 	{
+		auto r = roomSearch->SearchResults[i];
+
 		if (false == r.IsValid())
 			continue;
 
-		FString roomName;
-		r.Session.SessionSettings.Get( TEXT( "ROOM_NAME" ) , roomName );
+		FRoomInfo info;
 
-		FString _hostName;
-		r.Session.SessionSettings.Get( TEXT( "HOST_NAME" ) , _hostName );
+		info.index = i;
 
-		FString userName = r.Session.OwningUserName;
+		r.Session.SessionSettings.Get( TEXT( "ROOM_NAME" ) , info.roomName );
+		r.Session.SessionSettings.Get( TEXT( "HOST_NAME" ) , info.hostName );
 
 		int32 max = r.Session.SessionSettings.NumPublicConnections;
-
 		// 현재 입장 플레이어 수 = 최대 - 입장가능 수
 		int32 current = max - r.Session.NumOpenPublicConnections;
-		FString playerCount = FString::Printf( TEXT( "%d / %d" ) , current , max );
+		info.playerCount = FString::Printf( TEXT( "%d / %d" ) , current , max );
 
-		FString pingMS = FString::Printf( TEXT( "%dms" ) , r.PingInMs);
+		info.pingMS = FString::Printf( TEXT( "%dms" ) , r.PingInMs );
 
-		UE_LOG( LogTemp , Warning , TEXT( "RoomName : %s, HostName:%s, UserName : %s, PlayerCount : %s, Ping : %s" ) , *roomName, *_hostName , *userName, *playerCount, *pingMS );
+		info.PrintLog();
 
+		// 만약 바인된 함수가 있다면
+		if (onAddRoomInfoDelegate.IsBound())
+		{
+			onAddRoomInfoDelegate.Broadcast( info );
+		}
+	}
+}
 
+void UNetGameInstance::JoinRoom( int32 index )
+{
+	auto r = roomSearch->SearchResults[index];
+	FString sessionName;
+	r.Session.SessionSettings.Get( TEXT( "ROOM_NAME" ) , sessionName );
+	sessionInterface->JoinSession( 0 , FName( *sessionName ) , r );
+}
 
+void UNetGameInstance::OnMyJoinRoomComplete( FName sessionName , EOnJoinSessionCompleteResult::Type result )
+{
+	// 성공했다면?
+	if (EOnJoinSessionCompleteResult::Success == result)
+	{
+		// 서버의 주소를 받아와서
+		FString url;
+		sessionInterface->GetResolvedConnectString( sessionName , url );
+		// 여행을 떠나고 싶다.
+		auto pc = GetWorld()->GetFirstPlayerController();
+		pc->ClientTravel( url , TRAVEL_Absolute );
+	}
+	// 그렇지않다면
+	else
+	{
+		UE_LOG( LogTemp , Warning , TEXT( "Join Session Failed... : %d" ), result );
 	}
 }
 

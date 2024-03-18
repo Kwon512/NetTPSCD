@@ -4,6 +4,7 @@
 #include "LobbyWidget.h"
 
 #include "NetGameInstance.h"
+#include "RoomInfoWidget.h"
 #include "Components/Button.h"
 #include "Components/EditableText.h"
 #include "Components/ScrollBox.h"
@@ -24,6 +25,11 @@ void ULobbyWidget::NativeConstruct()
 	Super::NativeConstruct();
 
 	gi = GetWorld()->GetGameInstance<UNetGameInstance>();
+	if (gi)
+	{
+		gi->onAddRoomInfoDelegate.AddDynamic( this , &ULobbyWidget::AddRoomInfoWidget );
+		gi->onFindingRoomsDelegate.AddDynamic( this , &ULobbyWidget::SetFindActive );
+	}
 
 	btn_doCreateRoom->OnClicked.AddDynamic( this , &ULobbyWidget::OnMyClicked_doCreateRoom );
 	btn_doFindRoomList->OnClicked.AddDynamic( this , &ULobbyWidget::OnMyDoFindRoomList );
@@ -95,6 +101,8 @@ void ULobbyWidget::OnMyGoCreateRoom()
 void ULobbyWidget::OnMyGoFindRoom()
 {
 	SwitchPanel( SWITCHER_INDEX_FINDROOM );
+	// 메뉴에서 방찾기로 진입시에 조회를 하고싶다.
+	OnMyDoFindRoomList();
 }
 
 void ULobbyWidget::OnMyDoFindRoomList()
@@ -103,5 +111,36 @@ void ULobbyWidget::OnMyDoFindRoomList()
 	if (gi)
 	{
 		gi->FindOtherRooms();
+	}
+}
+
+void ULobbyWidget::AddRoomInfoWidget( const FRoomInfo& info )
+{
+	if (nullptr == scroll_roomList || nullptr == roomInfoFactory)
+		return;
+
+	// 위젯을 생성해서 roomInfoFactory
+	auto ui = CreateWidget<URoomInfoWidget>( GetWorld() , roomInfoFactory );
+	ui->SetInfo( info );
+	// scroll_roomList의 자식으로 붙이고싶다.
+	scroll_roomList->AddChild( ui );
+}
+
+void ULobbyWidget::SetFindActive( bool bActive )
+{
+	// bActive가 true라면
+	if (bActive)
+	{
+		// btn_doFindRoomList 버튼을 비활성화 하고싶다.
+		btn_doFindRoomList->SetIsEnabled( false );
+		// txt_findingRooms를 보이게 하고싶다.
+		txt_findingRooms->SetVisibility( ESlateVisibility::Visible );
+	}
+	// 그렇지 않다면
+	else {
+		// btn_doFindRoomList 버튼을 활성화 하고싶다.
+		btn_doFindRoomList->SetIsEnabled( true );
+		// txt_findingRooms를 안 보이게 하고싶다.
+		txt_findingRooms->SetVisibility( ESlateVisibility::Hidden );
 	}
 }

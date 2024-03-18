@@ -31,8 +31,11 @@ public:
 
 	int32 roomIndex;
 
-	void SetInfo(int32 idx, FString roomName, FString _hostName, FString playerCount, FString pingMS );
+	void SetInfo( const struct FRoomInfo& info );
 
 	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )
 	class UButton* btn_join;
+
+	UFUNCTION()
+	void OnMyJoinRoom();
 };
