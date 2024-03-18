@@ -41,4 +41,31 @@ public:
 	// 버튼을 누르면 UNetGameInstance::CreateRoom 를 호출하고싶다.
 	UFUNCTION()
 	void OnMyClicked_doCreateRoom();
+
+	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )
+	class UWidgetSwitcher* widgetSwitcherLobby;
+
+	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )
+	class UButton* btn_goCreateRoom;
+
+	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )
+	class UButton* btn_goFindRoom;
+
+	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )
+	class UButton* btn_goMenuFromCreateRoom;
+
+	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )
+	class UButton* btn_goMenuFromFindRoom;
+
+	void SwitchPanel( int32 index );
+
+	UFUNCTION()
+	void OnMyGoMenu();
+
+	UFUNCTION()
+	void OnMyGoCreateRoom();
+
+	UFUNCTION()
+	void OnMyGoFindRoom();
+
 };
