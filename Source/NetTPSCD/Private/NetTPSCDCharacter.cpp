@@ -313,7 +313,7 @@ void ANetTPSCDCharacter::ServerFire_Implementation()
 		auto otherPlayer = Cast<ANetTPSCDCharacter>( OutHit.GetActor() );
 		if (otherPlayer)
 		{
-			otherPlayer->TakeDamage( 1 );
+			otherPlayer->OnMyTakeDamage( 1 );
 			// 나의 점수를 1점 증가시키고싶다.
 			auto ps = Cast<ANetPlayerController>( Controller )->GetPlayerState<ANetPlayerState>();
 			ps->SetScore( ps->GetScore() + 1 );
@@ -437,7 +437,7 @@ void ANetTPSCDCharacter::SetHP( int32 value )
 	OnRep_HP();
 }
 
-void ANetTPSCDCharacter::TakeDamage( int32 damage )
+void ANetTPSCDCharacter::OnMyTakeDamage( int32 damage )
 {
 	// 데미지만큼 체력을 감소하고싶다.
 	int32 newHP = FMath::Clamp<int32>( GetHP() - damage , 0 , maxHP );
@@ -493,6 +493,10 @@ void ANetTPSCDCharacter::SetupPlayerInputComponent( UInputComponent* PlayerInput
 		EnhancedInputComponent->BindAction( FireAction , ETriggerEvent::Started , this , &ANetTPSCDCharacter::Fire );
 
 		EnhancedInputComponent->BindAction( ReloadAction , ETriggerEvent::Started , this , &ANetTPSCDCharacter::Reload );
+
+		EnhancedInputComponent->BindAction( VoiceAction , ETriggerEvent::Started , this , &ANetTPSCDCharacter::VoiceStart );
+
+		EnhancedInputComponent->BindAction( VoiceAction , ETriggerEvent::Completed , this , &ANetTPSCDCharacter::VoiceStop );
 	}
 	else
 	{
@@ -549,6 +553,24 @@ void ANetTPSCDCharacter::DamageProcess()
 	if (mainUI)
 	{
 		mainUI->SetShowGameOverUI( true );
+	}
+}
+
+void ANetTPSCDCharacter::VoiceStart( const FInputActionValue& Value )
+{
+	auto pc = Cast<APlayerController>( GetController() );
+	if (pc && pc->IsLocalController())
+	{
+		pc->StartTalking();
+	}
+}
+
+void ANetTPSCDCharacter::VoiceStop( const FInputActionValue& Value )
+{
+	auto pc = Cast<APlayerController>(GetController());
+	if (pc && pc->IsLocalController())
+	{
+		pc->StopTalking();
 	}
 }
 

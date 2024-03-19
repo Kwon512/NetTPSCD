@@ -159,7 +159,7 @@ public:
 
 	void SetHP( int32 value );
 
-	void TakeDamage( int32 damage );
+	void OnMyTakeDamage( int32 damage );
 
 	// 상대방의 HUD를 추가하고싶다.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
@@ -221,6 +221,13 @@ public:
 	// 애니메이션이 끝나면 ServerInitAmmo 가 불리면
 
 	void DamageProcess();
+
+	UPROPERTY( EditAnywhere , BlueprintReadOnly , Category = Input )
+	UInputAction* VoiceAction;
+
+	void VoiceStart( const FInputActionValue& Value );
+	void VoiceStop( const FInputActionValue& Value );
+
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
