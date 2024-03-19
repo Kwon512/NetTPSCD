@@ -65,4 +65,9 @@ public:
 
 	UFUNCTION()
 	void OnMyClickQuit();
+
+	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )
+	class UTextBlock* txt_players;
+
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 };

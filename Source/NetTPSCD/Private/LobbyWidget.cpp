@@ -95,14 +95,44 @@ void ULobbyWidget::OnMyGoMenu()
 
 void ULobbyWidget::OnMyGoCreateRoom()
 {
-	SwitchPanel( SWITCHER_INDEX_CREATEROOM );
+	// 게임인스턴스가 있다면
+	if (gi)
+	{
+		// 이름을 적었다면?
+		if (false == edit_nickName->GetText().IsEmpty())
+		{
+			// 적은 이름을 내 닉네임으로 하고싶다.
+			gi->myNickName = edit_nickName->GetText().ToString();
+		}
+		else
+		{
+			// 기본 닉네임을 edit_nickName에 적고싶다.
+			edit_nickName->SetText( FText::FromString( gi->myNickName ) );
+		}
+		SwitchPanel( SWITCHER_INDEX_CREATEROOM );
+	}
 }
 
 void ULobbyWidget::OnMyGoFindRoom()
 {
-	SwitchPanel( SWITCHER_INDEX_FINDROOM );
-	// 메뉴에서 방찾기로 진입시에 조회를 하고싶다.
-	OnMyDoFindRoomList();
+	// 게임인스턴스가 있다면
+	if (gi)
+	{
+		// 이름을 적었다면?
+		if (false == edit_nickName->GetText().IsEmpty())
+		{
+			// 적은 이름을 내 닉네임으로 하고싶다.
+			gi->myNickName = edit_nickName->GetText().ToString();
+		}
+		else
+		{
+			// 기본 닉네임을 edit_nickName에 적고싶다.
+			edit_nickName->SetText( FText::FromString( gi->myNickName ) );
+		}
+		SwitchPanel( SWITCHER_INDEX_FINDROOM );
+		// 메뉴에서 방찾기로 진입시에 조회를 하고싶다.
+		OnMyDoFindRoomList();
+	}
 }
 
 void ULobbyWidget::OnMyDoFindRoomList()

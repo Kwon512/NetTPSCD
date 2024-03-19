@@ -15,6 +15,8 @@ class NETTPSCD_API ALobbyGameMode : public AGameModeBase
 	GENERATED_BODY()
 
 public:
+	ALobbyGameMode();
+
 	virtual void BeginPlay() override;
 	
 };

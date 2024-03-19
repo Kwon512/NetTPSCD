@@ -88,5 +88,8 @@ public:
 
 	UFUNCTION()
 	void SetFindActive( bool bActive );
+
+	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )
+	class  UEditableText* edit_nickName;
 	
 };

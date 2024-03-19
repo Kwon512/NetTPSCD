@@ -7,7 +7,10 @@
 #include "Components/Button.h"
 #include "Components/CanvasPanel.h"
 #include "Components/Image.h"
+#include "Components/TextBlock.h"
 #include "Components/UniformGridPanel.h"
+#include "GameFramework/GameStateBase.h"
+#include "GameFramework/PlayerState.h"
 
 void UMainUI::NativeConstruct()
 {
@@ -92,4 +95,21 @@ void UMainUI::OnMyClickRetry()
 void UMainUI::OnMyClickQuit()
 {
 	UE_LOG( LogTemp , Warning , TEXT( "OnMyClickQuit" ) );
+}
+
+void UMainUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
+{
+	Super::NativeTick(MyGeometry , InDeltaTime);
+
+	// 전체 유저들의 이름을 알고싶다.
+	auto playerList = GetWorld()->GetGameState()->PlayerArray;
+	FString txt;
+	// 그 이름들을 모두 모아
+	for (const APlayerState* ps : playerList)
+	{
+		const int32 _score = static_cast<int32>(ps->GetScore());
+		txt.Append( FString::Printf( TEXT("%s : %d점\n") , *ps->GetPlayerName(), _score ) );
+	}
+	// 화면에 출력하고싶다.
+	txt_players->SetText( FText::FromString( txt ) );
 }

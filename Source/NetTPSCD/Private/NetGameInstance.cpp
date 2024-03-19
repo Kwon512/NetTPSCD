@@ -42,7 +42,7 @@ void UNetGameInstance::CreateRoom( int32 maxPlayerCount , FString roomName )
 	// 6. 최대 입장 가능한 수 설정
 	setting.NumPublicConnections = maxPlayerCount;
 	// 7. 커스텀 정보 설정
-	setting.Set( TEXT( "HOST_NAME" ) , hostName , EOnlineDataAdvertisementType::ViaOnlineServiceAndPing );
+	setting.Set( TEXT( "HOST_NAME" ) , myNickName , EOnlineDataAdvertisementType::ViaOnlineServiceAndPing );
 	setting.Set( TEXT( "ROOM_NAME" ) , roomName , EOnlineDataAdvertisementType::ViaOnlineServiceAndPing );
 	// 8. netID 찾기
 	FUniqueNetIdPtr netID = GetWorld()->GetFirstLocalPlayerFromController()->GetUniqueNetIdForPlatformUser().GetUniqueNetId();
@@ -61,6 +61,8 @@ void UNetGameInstance::OnMyCreateRoomComplete( FName sessionName , bool bWasSucc
 	// 방을 생성했다면
 	if (bWasSuccessful)
 	{
+		// 입장한 방의 이름을 기억하고싶다.
+		myRoomName = sessionName.ToString();
 		// 서버는 세계 여행을 떠나고싶다. 어디로???
 		FString url = TEXT( "/Game/Net/Maps/BattleMap?listen" );
 		GetWorld()->ServerTravel( url );
@@ -142,6 +144,9 @@ void UNetGameInstance::OnMyJoinRoomComplete( FName sessionName , EOnJoinSessionC
 	// 성공했다면?
 	if (EOnJoinSessionCompleteResult::Success == result)
 	{
+		// 입장한 방의 이름을 기억하고싶다.
+		myRoomName = sessionName.ToString();
+
 		// 서버의 주소를 받아와서
 		FString url;
 		sessionInterface->GetResolvedConnectString( sessionName , url );
