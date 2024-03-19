@@ -66,6 +66,8 @@ public:
 	UFUNCTION()
 	void OnMyClickQuit();
 
+	
+
 	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )
 	class UTextBlock* txt_players;
 

@@ -39,7 +39,6 @@ UCLASS()
 class NETTPSCD_API UNetGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
-
 public:
 	// 시작할 때 세션인터페이스를 기억하고싶다.
 	virtual void Init() override;
@@ -71,5 +70,14 @@ public:
 	void JoinRoom(int32 index);
 	// 방 입장 응답
 	void OnMyJoinRoomComplete( FName sessionName , EOnJoinSessionCompleteResult::Type result );
+
+	// 방 퇴장 요청
+	void ExitRoom();
+
+	UFUNCTION(Server, Reliable)
+	void ServerExitRoom();
+
+	UFUNCTION()
+	void OnMyExitRoomComplete( FName sessionName , bool bWasSuccessful );
 	
 };

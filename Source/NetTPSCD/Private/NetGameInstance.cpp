@@ -20,6 +20,8 @@ void UNetGameInstance::Init()
 		sessionInterface->OnFindSessionsCompleteDelegates.AddUObject( this , &UNetGameInstance::OnMyFindOtherRoomsComplete );
 
 		sessionInterface->OnJoinSessionCompleteDelegates.AddUObject( this , &UNetGameInstance::OnMyJoinRoomComplete );
+
+		sessionInterface->OnDestroySessionCompleteDelegates.AddUObject( this , &UNetGameInstance::OnMyExitRoomComplete );
 	}
 }
 
@@ -159,5 +161,23 @@ void UNetGameInstance::OnMyJoinRoomComplete( FName sessionName , EOnJoinSessionC
 	{
 		UE_LOG( LogTemp , Warning , TEXT( "Join Session Failed... : %d" ), result );
 	}
+}
+
+void UNetGameInstance::ExitRoom()
+{
+	ServerExitRoom();
+}
+
+void UNetGameInstance::ServerExitRoom_Implementation()
+{
+	sessionInterface->DestroySession( FName( *myRoomName ) );
+}
+
+void UNetGameInstance::OnMyExitRoomComplete(FName sessionName, bool bWasSuccessful)
+{
+	// 플레이어는 LobbyMap으로 여행을 떠나고싶다.
+	auto pc = GetWorld()->GetFirstPlayerController();
+	FString url = TEXT( "/Game/Net/Maps/LobbyMap" );
+	pc->ClientTravel( url , TRAVEL_Absolute );
 }
 
