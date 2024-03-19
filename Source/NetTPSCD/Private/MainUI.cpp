@@ -20,6 +20,7 @@ void UMainUI::NativeConstruct()
 	SetShowGameOverUI( false );
 	btn_retry->OnClicked.AddDynamic( this , &UMainUI::OnMyClickRetry );
 	btn_quit->OnClicked.AddDynamic( this , &UMainUI::OnMyClickQuit );
+	btn_exit->OnClicked.AddDynamic( this , &UMainUI::OnMyClickQuit );
 
 }
 

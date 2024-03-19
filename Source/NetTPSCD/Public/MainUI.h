@@ -66,6 +66,10 @@ public:
 	UFUNCTION()
 	void OnMyClickQuit();
 
+	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )
+	class UButton* btn_exit;
+	
+
 	
 
 	UPROPERTY( EditDefaultsOnly , meta = (BindWidget) )

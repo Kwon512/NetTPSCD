@@ -42,6 +42,7 @@ class NETTPSCD_API UNetGameInstance : public UGameInstance
 public:
 	// 시작할 때 세션인터페이스를 기억하고싶다.
 	virtual void Init() override;
+	bool IsInRoom();
 
 	IOnlineSessionPtr sessionInterface;
 
@@ -76,6 +77,9 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void ServerExitRoom();
+
+	UFUNCTION( NetMulticast , Reliable )
+	void MultiExitRoom();
 
 	UFUNCTION()
 	void OnMyExitRoomComplete( FName sessionName , bool bWasSuccessful );

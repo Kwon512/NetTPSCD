@@ -25,6 +25,12 @@ void UNetGameInstance::Init()
 	}
 }
 
+bool UNetGameInstance::IsInRoom()
+{
+	FUniqueNetIdPtr netID = GetWorld()->GetFirstLocalPlayerFromController()->GetUniqueNetIdForPlatformUser().GetUniqueNetId();
+	return sessionInterface->IsPlayerInSession( FName(*myRoomName) , *netID );
+}
+
 void UNetGameInstance::CreateRoom( int32 maxPlayerCount , FString roomName )
 {
 	FOnlineSessionSettings setting;
@@ -169,6 +175,11 @@ void UNetGameInstance::ExitRoom()
 }
 
 void UNetGameInstance::ServerExitRoom_Implementation()
+{
+	MultiExitRoom();
+}
+
+void UNetGameInstance::MultiExitRoom_Implementation()
 {
 	sessionInterface->DestroySession( FName( *myRoomName ) );
 }

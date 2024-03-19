@@ -4,6 +4,7 @@
 #include "NetTestActor.h"
 
 #include "EngineUtils.h"
+#include "NetGameInstance.h"
 #include "NetTPSCDCharacter.h"
 #include "Net/UnrealNetwork.h"
 
@@ -139,6 +140,7 @@ void ANetTestActor::ChangeMatColor()
 {
 	// 재질을 dynamic으로 다시 만들고 싶다.
 	mat = meshComp->CreateDynamicMaterialInstance( 0 );
+	auto gi = GetGameInstance<UNetGameInstance>();
 
 	// 서버에서
 	if (HasAuthority())
@@ -146,11 +148,14 @@ void ANetTestActor::ChangeMatColor()
 		// 타이머를 이용해서 1초마다 색을 바꾸고싶다.
 		// 타이머로 람다식, 무명함수
 		FTimerHandle handle;
-		GetWorldTimerManager().SetTimer( handle , [&]()
+		GetWorldTimerManager().SetTimer( handle , [&, gi]()
 		{
-			matColor = FLinearColor::MakeRandomColor();
 			//OnRep_ChangeMatColor();
-			ServerChangeMatColor( matColor );
+			if (gi->IsInRoom())
+			{
+				matColor = FLinearColor::MakeRandomColor();
+				ServerChangeMatColor( matColor );
+			}
 		} , 1 , true );
 	}
 }
