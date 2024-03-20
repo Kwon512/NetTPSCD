@@ -28,6 +28,7 @@ void UNetGameInstance::Init()
 bool UNetGameInstance::IsInRoom()
 {
 	FUniqueNetIdPtr netID = GetWorld()->GetFirstLocalPlayerFromController()->GetUniqueNetIdForPlatformUser().GetUniqueNetId();
+
 	return sessionInterface->IsPlayerInSession( FName(*myRoomName) , *netID );
 }
 
@@ -58,8 +59,6 @@ void UNetGameInstance::CreateRoom( int32 maxPlayerCount , FString roomName )
 	UE_LOG( LogTemp , Warning , TEXT( "CreateRoom Start!!! roomNamd : %s, netID : %s" ) , *roomName , *netID->ToString() );
 
 	sessionInterface->CreateSession( *netID , FName( *roomName ) , setting );
-
-
 }
 
 void UNetGameInstance::OnMyCreateRoomComplete( FName sessionName , bool bWasSuccessful )
