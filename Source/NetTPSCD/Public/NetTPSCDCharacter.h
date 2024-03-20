@@ -228,6 +228,16 @@ public:
 	void VoiceStart( const FInputActionValue& Value );
 	void VoiceStop( const FInputActionValue& Value );
 
+	UPROPERTY( EditAnywhere , BlueprintReadOnly , Category = Input )
+	UInputAction* ChatAction;
+
+	void ChatFlag( const FInputActionValue& Value );
+
+	UFUNCTION(Server, Reliable)
+	void ServerSendMsg(const FString& msg);
+
+	UFUNCTION( NetMulticast, Reliable )
+	void MultiSendMsg( const FString& msg );
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 

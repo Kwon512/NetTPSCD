@@ -497,6 +497,9 @@ void ANetTPSCDCharacter::SetupPlayerInputComponent( UInputComponent* PlayerInput
 		EnhancedInputComponent->BindAction( VoiceAction , ETriggerEvent::Started , this , &ANetTPSCDCharacter::VoiceStart );
 
 		EnhancedInputComponent->BindAction( VoiceAction , ETriggerEvent::Completed , this , &ANetTPSCDCharacter::VoiceStop );
+
+		EnhancedInputComponent->BindAction( ChatAction , ETriggerEvent::Started , this , &ANetTPSCDCharacter::ChatFlag );
+
 	}
 	else
 	{
@@ -571,6 +574,29 @@ void ANetTPSCDCharacter::VoiceStop( const FInputActionValue& Value )
 	if (pc && pc->IsLocalController())
 	{
 		pc->StopTalking();
+	}
+}
+
+void ANetTPSCDCharacter::ChatFlag(const FInputActionValue& Value)
+{
+	auto pc = Cast<APlayerController>( GetController() );
+	if (pc && pc->IsLocalController())
+	{
+		pc->SetShowMouseCursor( !pc->ShouldShowMouseCursor() );
+	}
+}
+
+void ANetTPSCDCharacter::ServerSendMsg_Implementation(const FString& msg)
+{
+	MultiSendMsg( msg );
+}
+
+void ANetTPSCDCharacter::MultiSendMsg_Implementation(const FString& msg)
+{
+	auto player = Cast<ANetTPSCDCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	if (player && player->mainUI)
+	{
+		player->mainUI->RecvMsg( msg );
 	}
 }
 

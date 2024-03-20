@@ -3,11 +3,15 @@
 
 #include "MainUI.h"
 
+#include "MessageUI.h"
 #include "NetGameInstance.h"
 #include "NetPlayerController.h"
+#include "NetTPSCDCharacter.h"
 #include "Components/Button.h"
 #include "Components/CanvasPanel.h"
+#include "Components/EditableText.h"
 #include "Components/Image.h"
+#include "Components/ScrollBox.h"
 #include "Components/TextBlock.h"
 #include "Components/UniformGridPanel.h"
 #include "GameFramework/GameStateBase.h"
@@ -21,7 +25,7 @@ void UMainUI::NativeConstruct()
 	btn_retry->OnClicked.AddDynamic( this , &UMainUI::OnMyClickRetry );
 	btn_quit->OnClicked.AddDynamic( this , &UMainUI::OnMyClickQuit );
 	btn_exit->OnClicked.AddDynamic( this , &UMainUI::OnMyClickQuit );
-
+	btn_sendMsg->OnClicked.AddDynamic( this , &UMainUI::OnMySendMsg );
 }
 
 void UMainUI::SetActiveCrosshair( bool bActive )
@@ -117,4 +121,40 @@ void UMainUI::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	}
 	// 화면에 출력하고싶다.
 	txt_players->SetText( FText::FromString( txt ) );
+
+}
+
+void UMainUI::OnMySendMsg()
+{
+	FString msg = edit_sendMsg->GetText().ToString();
+	// 보낼 메시지가 비어있으면 함수종료
+	if (msg.IsEmpty())
+		return;
+
+	TArray<FString> badwordList;
+	badwordList.Add( TEXT( "바보" ) );
+
+
+	for (int i=0 ; i< badwordList.Num(); i++)
+	{
+		msg = msg.Replace( *badwordList[i], TEXT("**") );
+	}
+
+	// 현재 로컬 플레이어에게 서버로 메시지를 전달하라고 요청
+	auto player = Cast<ANetTPSCDCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	if (player)
+	{
+		player->ServerSendMsg( msg );
+	}
+}
+
+void UMainUI::RecvMsg(const FString& msg)
+{
+	// wbp_msg를 생성해서
+	auto msgUI = CreateWidget<UMessageUI>( GetWorld() , msgUIFactory );
+	// 메시지를 UI에 적용하고
+	msgUI->txt_msg->SetText( FText::FromString( msg ) );
+	// scroll_msg 에 자식으로 붙이고싶다.
+	scroll_msg->AddChild( msgUI );
+
 }
