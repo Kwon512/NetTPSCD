@@ -52,11 +52,9 @@ void UNetGameInstance::CreateRoom( int32 maxPlayerCount , FString roomName )
 	setting.NumPublicConnections = maxPlayerCount;
 	// 7. 커스텀 정보 설정
 
-	FString roomName_enc = StringBase64Encode( roomName );
-	FString hostName_enc = StringBase64Encode( myNickName );
 
-	setting.Set( TEXT( "ROOM_NAME" ) , roomName_enc , EOnlineDataAdvertisementType::ViaOnlineServiceAndPing );
-	setting.Set( TEXT( "HOST_NAME" ) , hostName_enc , EOnlineDataAdvertisementType::ViaOnlineServiceAndPing );
+	setting.Set( TEXT( "ROOM_NAME" ) , StringBase64Encode( roomName ) , EOnlineDataAdvertisementType::ViaOnlineServiceAndPing );
+	setting.Set( TEXT( "HOST_NAME" ) , StringBase64Encode( myNickName ) , EOnlineDataAdvertisementType::ViaOnlineServiceAndPing );
 	// 8. netID 찾기
 	FUniqueNetIdPtr netID = GetWorld()->GetFirstLocalPlayerFromController()->GetUniqueNetIdForPlatformUser().GetUniqueNetId();
 
@@ -122,11 +120,14 @@ void UNetGameInstance::OnMyFindOtherRoomsComplete( bool bWasSuccessful )
 
 		info.index = i;
 
-		FString roomName_enc = StringBase64Encode( info.roomName );
-		FString hostName_enc = StringBase64Encode( info.hostName );
+		FString roomName_enc;
+		FString hostName_enc;
 
 		r.Session.SessionSettings.Get( TEXT( "ROOM_NAME" ) , roomName_enc );
 		r.Session.SessionSettings.Get( TEXT( "HOST_NAME" ) , hostName_enc );
+
+		info.roomName = StringBase64Decode( roomName_enc );
+		info.hostName = StringBase64Decode( hostName_enc );
 
 		int32 max = r.Session.SessionSettings.NumPublicConnections;
 		// 현재 입장 플레이어 수 = 최대 - 입장가능 수
